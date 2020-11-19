@@ -1,54 +1,46 @@
 from cmu_112_graphics import *
+from player import *
 
 def appStarted(app):
-    app.playerX = app.width // 2
-    app.playerY = app.width // 2
+    app.player = Player(500, 500)
     app.kirbySprite = app.loadImage("kirby.png")
-    app.keysPressed = {"a": False, "d": False, "w": False, "s": False}
-    app.timerDelay = 25
+    app.keysPressed = {"a": False, "d": False, "w": False, "s": False, 
+                       "Space": False}
+    app.timerDelay = 17
 
 def keyPressed(app, event):
-    if (event.key == "a"):
-        app.keysPressed["a"] = True
-    elif (event.key == "d"):
-        app.keysPressed["d"] = True
-    elif (event.key == "w"):
-        app.keysPressed["w"] = True
-    elif (event.key == "s"):
-        app.keysPressed["s"] = True
+    if ((event.key) in app.keysPressed):
+        app.keysPressed[event.key] = True
 
 def keyReleased(app, event):
-    if (event.key == "a"):
-        app.keysPressed["a"] = False
-    elif (event.key == "d"):
-        app.keysPressed["d"] = False
-    elif (event.key == "w"):
-        app.keysPressed["w"] = False
-    elif (event.key == "s"):
-        app.keysPressed["s"] = False
+    if ((event.key) in app.keysPressed):
+        app.keysPressed[event.key] = False
+        if (event.key == "Space"):
+            app.player.isJumping = False
 
 def timerFired(app):
     doStep(app)
 
 def doStep(app):
-    print (app.keysPressed)
+    # print (app.keysPressed)
     if (app.keysPressed["a"]):
-        app.playerX -= 10
-    if (app.keysPressed["d"]):
-        app.playerX += 10
-    if (app.keysPressed["w"]):
-        app.playerY -= 10
-    if (app.keysPressed["s"]):
-        app.playerY += 10
+        app.player.setvx(-10)
+    elif (app.keysPressed["d"]):
+        app.player.setvx(10)
+    else:
+        app.player.setvx(0)
+    if (app.keysPressed["Space"]):
+        app.player.jump()
+    app.player.move()
 
 
 
 def redrawAll(app, canvas):
-    canvas.create_image(app.playerX, app.playerY, 
+    canvas.create_image(app.player.x, app.player.y, 
                         image=ImageTk.PhotoImage(app.kirbySprite))
 
 def main():
-    runApp(width = 1000, height = 1000)
+    runApp(width = 800, height = 600)
 
 if __name__ == '__main__':
     main()
