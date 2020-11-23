@@ -40,68 +40,72 @@ class Player(object):
         if (self.vx == 0 and self.vy == 0):
             xAdjust, yAdjust = (0, 0)
         else:
-            xAdjust, yAdjust = self.moveWithCollision(stage, self.vx, self.vy)
-        print(xAdjust, yAdjust)
-        self.x += xAdjust + self.vx
-        self.y += yAdjust + self.vy
+            tiles = []
+            for tile in stage.tiles:
+                if (tile.inProximity(self.x, self.y, self.radius)):
+                    tiles.append(tile)
+            self.moveWithCollision(stage, self.vx, self.vy,
+                                tiles, 0, 0)
         self.updateBoundingBoxPoints(self.x, self.y)
         # print (time.time() - start)
     
-    def moveWithCollision(self, stage, vx, vy):
+    def moveWithCollision(self, stage, vx, vy, tiles, xAdjust, yAdjust):
         self.updateBoundingBoxPoints(self.x + vx, self.y + vy)
+        if (len(tiles) == 0):
+            print(xAdjust, yAdjust)
+            self.x += vx + xAdjust
+            self.y += vy + yAdjust
+            return
+        tile = tiles[0]
+        xBorder = False
+        yBorder = False
+        xContact = False
         if (self.x + vx - 5 < 0 or self.x + vx + self.w - 5 > stage.width):
             xAdjust = -vx
-        else:
-            xAdjust = 0
+            xBorder = True
         if (self.y + vy - 5 < 0 or self.y + vy + self.h - 5 > stage.height):
             yAdjust = -vy
+            yBorder = True
+        collisionPoints = []
+        sidePoints = [0, 3]
+        vertPoints = [1, 2, 5, 6]
+        cornerPoints = [4, 7]
+        for i in range(len(self.boundingBoxPoints)):
+            x, y = self.boundingBoxPoints[i]
+            if (tile.isInTile(x,y)):
+                collisionPoints.append(i)
+        print (collisionPoints)
+        if (1 in collisionPoints or 2 in collisionPoints
+            and 0 not in collisionPoints and 3 not in collisionPoints):
+            self.onGround = True
+            self.doubleJump = False
         else:
-            yAdjust = 0
-        for tile in stage.tiles:
-            if (tile.inProximity(self.x, self.y, self.radius)):
-                collisionPoints = []
-                sidePoints = [0, 3]
-                vertPoints = [1, 2, 5, 6]
-                cornerPoints = [4, 7]
-                for i in range(len(self.boundingBoxPoints)):
-                    x, y = self.boundingBoxPoints[i]
-                    if (tile.isInTile(x,y)):
-                        collisionPoints.append(i)
-                print (collisionPoints)
-                if (1 in collisionPoints or 2 in collisionPoints
-                    and 0 not in collisionPoints and 3 not in collisionPoints):
-                    self.onGround = True
-                    self.doubleJump = False
-                else:
-                    self.onGround = False
-                for i in sidePoints:
-                    if (i in collisionPoints):
-                        print("Side")
-                        return (tile.adjustBy(
-                                    self.boundingBoxPoints[i], "x"), yAdjust)
-                for i in vertPoints:
-                    if (i in collisionPoints):
-                        print("Vertical")
-                        x, y = self.boundingBoxPoints[i]
-                        return (xAdjust, tile.adjustBy(
-                                    self.boundingBoxPoints[i], "y"))
-                for i in cornerPoints:
-                    if (i in collisionPoints):
-                        xOffset = 1
-                        yOffset = 1
-                        x, y = self.boundingBoxPoints[i]
-                        print("Corner")
-                        if (abs(vx) > abs(vy)):
-                            if (vx > 0):
-                                return (tile.adjustBy((x + xOffset, y),
-                                             "x"), yAdjust) 
-                            else:
-                                return (tile.adjustBy((x - xOffset, y),
-                                             "x"), yAdjust) 
-                        else:
-                            return (xAdjust, tile.adjustBy((x, y - yOffset), 
-                                        "y")) 
-        return (xAdjust, yAdjust)
+            self.onGround = False
+        for i in sidePoints:
+            if (i in collisionPoints and not xBorder):
+                print("Side")
+                xContact = True
+                xAdjust = tile.adjustBy(self.boundingBoxPoints[i], "x")
+        for i in vertPoints:
+            if (i in collisionPoints and not yBorder and not xContact):
+                print("Vertical")
+                x, y = self.boundingBoxPoints[i]
+                yAdjust = tile.adjustBy(self.boundingBoxPoints[i], "y")
+        for i in cornerPoints:
+            if (i in collisionPoints and not xContact):
+                xOffset = 1
+                yOffset = 1
+                x, y = self.boundingBoxPoints[i]
+                print("Corner")
+                if (abs(vx) > abs(vy)):
+                    if (vx > 0 and not xBorder):
+                        xAdjust = tile.adjustBy((x + xOffset, y), "x")
+                    else:
+                        xAdjust = tile.adjustBy((x - xOffset, y), "x")
+                elif (not yBorder):
+                    yAdjust = tile.adjustBy((x, y - yOffset), "y")
+        self.moveWithCollision(stage, vx, vy, tiles[1:], xAdjust, yAdjust)
+        
 
     def updateBoundingBoxPoints(self, x, y):
         self.boundingBoxPoints = [(0 + x, 16 + y), (0 + x, 40 + y), 
