@@ -1,19 +1,26 @@
 from cmu_112_graphics import *
 from player import *
+from stage import *
 import time
 
 def appStarted(app):
     app.player = Player(500, 500)
     app.keysPressed = {"a": False, "d": False, "w": False, "s": False, 
                        "Space": False, "f": False}
-    app.timerDelay = 25
+    app.timerDelay = 20
     app.FPS = 0
     app.start = 0
     app.kirbySprite = ImageTk.PhotoImage(app.loadImage("kirby.png"))
+    app.stage = Stage(app.width, app.height)
+    app.paused = False
 
 def keyPressed(app, event):
     if ((event.key) in app.keysPressed):
         app.keysPressed[event.key] = True
+    elif (event.key == "p"):
+        app.paused = not app.paused
+    elif (event.key == "x"):
+        doStep(app)
 
 def keyReleased(app, event):
     if ((event.key) in app.keysPressed):
@@ -22,7 +29,8 @@ def keyReleased(app, event):
             app.player.isJumping = False
 
 def timerFired(app):
-    doStep(app)
+    if (not app.paused):
+        doStep(app)
 
 def doStep(app):
     app.start = time.time()
@@ -33,9 +41,15 @@ def doStep(app):
         app.player.setvx(10)
     else:
         app.player.setvx(0)
+    if (app.keysPressed["s"]):
+        app.player.vy = 10
+    elif (app.keysPressed["w"]):
+        app.player.vy = -10
+    else:
+        app.player.vy = 0
     if (app.keysPressed["Space"]):
         app.player.jump()
-    app.player.move()
+    app.player.move(app.stage)
 
 def calculateFPS(app):
     millisecond = 1000
@@ -47,19 +61,26 @@ def calculateFPS(app):
     # beta = 0.2
     # return alpha * FPS + beta * snapshotFPS
 
-def renderInitialImages(app, canvas):
-    player = canvas.create_image(app.player.x, app.player.y, 
-            image = app.kirbySprite)
-
 def redrawAll(app, canvas):
     # if (len(canvas.find_all()) == 1):
     #     renderInitialImages(app, canvas)
     canvas.create_image(app.player.x, app.player.y, 
-                        image = app.kirbySprite)
+                        image = app.kirbySprite, anchor = "nw")
     # # canvas.create_rectangle(app.player.x, app.player.y, app.player.x + 10,
     # #                        app.player.y + 10)
     canvas.create_text(20, 20, font = "Arial 15 bold", 
                         text = int(calculateFPS(app)))
+    for tile in app.stage.tiles:
+        x0, y0, x1, y1 = tile.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
+
+    renderBoundingBoxPoints(canvas, app.player.boundingBoxPoints)
+
+def renderBoundingBoxPoints(canvas, boundingBoxPoints):
+    for i in range(len(boundingBoxPoints)):
+        x, y = boundingBoxPoints[i]
+        canvas.create_text(x, y, font = "Arial 8", 
+                                fill = "purple", text = str(i))
 
 def main():
     runApp(width = 800, height = 600)
