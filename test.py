@@ -1,6 +1,7 @@
 from cmu_112_graphics import *
 from player import *
 from stage import *
+from audio import *
 import time
 
 def appStarted(app):
@@ -13,6 +14,7 @@ def appStarted(app):
     app.kirbySprite = ImageTk.PhotoImage(app.loadImage("kirby.png"))
     app.stage = Stage(app.width, app.height)
     app.paused = False
+    app.audio = Audio()
 
 def keyPressed(app, event):
     if ((event.key) in app.keysPressed):
@@ -41,14 +43,8 @@ def doStep(app):
         app.player.setvx(10)
     else:
         app.player.setvx(0)
-    if (app.keysPressed["s"]):
-        app.player.vy = 10
-    elif (app.keysPressed["w"]):
-        app.player.vy = -10
-    else:
-        app.player.vy = 0
     if (app.keysPressed["Space"]):
-        app.player.jump()
+        app.player.jump(app)
     app.player.move(app.stage)
 
 def calculateFPS(app):
@@ -73,7 +69,7 @@ def redrawAll(app, canvas):
     for tile in app.stage.tiles:
         x0, y0, x1, y1 = tile.boundingBox
         canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
-
+    # print(app.player.onGround)
     renderBoundingBoxPoints(canvas, app.player.boundingBoxPoints)
 
 def renderBoundingBoxPoints(canvas, boundingBoxPoints):

@@ -48,12 +48,12 @@ class Square(Tile):
 
     def adjustBy(self, point, mode):
         x0, y0, x1, y1 = self.boundingBox
-        print (self.boundingBox)
-        print (point)
+        # print (self.boundingBox)
+        # print (point)
         x, y = point
         if (mode == "y"):
             if (abs(y- y0) < abs(y1 - y)):
-                print (y, y0)
+                # print (y, y0)
                 return y0 - y
             else:
                 return y1 - y
