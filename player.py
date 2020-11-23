@@ -67,44 +67,45 @@ class Player(object):
             yAdjust = -vy
             yBorder = True
         collisionPoints = []
-        sidePoints = [0, 3]
-        vertPoints = [1, 2, 5, 6]
-        cornerPoints = [4, 7]
         for i in range(len(self.boundingBoxPoints)):
             x, y = self.boundingBoxPoints[i]
             if (tile.isInTile(x,y)):
                 collisionPoints.append(i)
         print (collisionPoints)
+        xAdjust, yAdjust = self.checkPoints(collisionPoints, tile, 
+                                xBorder, yBorder, xContact, xAdjust, yAdjust)
+        self.moveWithCollision(stage, vx, vy, tiles[1:], xAdjust, yAdjust)
+
+    def checkPoints (self, collisionPoints, tile, xBorder, yBorder, 
+                    xContact, xAdjust, yAdjust):
         if (1 in collisionPoints or 2 in collisionPoints
             and 0 not in collisionPoints and 3 not in collisionPoints):
             self.onGround = True
             self.doubleJump = False
         else:
             self.onGround = False
+        sidePoints = [0, 3]
+        vertPoints = [1, 2, 5, 6]
+        cornerPoints = [4, 7]
         for i in sidePoints:
             if (i in collisionPoints and not xBorder):
-                print("Side")
                 xContact = True
-                xAdjust = tile.adjustBy(self.boundingBoxPoints[i], "x")
+                return (tile.adjustBy(self.boundingBoxPoints[i], "x"), yAdjust)
         for i in vertPoints:
             if (i in collisionPoints and not yBorder and not xContact):
-                print("Vertical")
                 x, y = self.boundingBoxPoints[i]
-                yAdjust = tile.adjustBy(self.boundingBoxPoints[i], "y")
+                return (xAdjust, tile.adjustBy(self.boundingBoxPoints[i], "y"))
         for i in cornerPoints:
             if (i in collisionPoints and not xContact):
-                xOffset = 1
-                yOffset = 1
                 x, y = self.boundingBoxPoints[i]
-                print("Corner")
-                if (abs(vx) > abs(vy)):
-                    if (vx > 0 and not xBorder):
-                        xAdjust = tile.adjustBy((x + xOffset, y), "x")
+                if (abs(self.vx) > abs(self.vy)):
+                    if (self.vx > 0 and not xBorder):
+                        return (tile.adjustBy((x + 1, y), "x"), yAdjust)
                     else:
-                        xAdjust = tile.adjustBy((x - xOffset, y), "x")
+                        return (tile.adjustBy((x - 1, y), "x"), yAdjust)
                 elif (not yBorder):
-                    yAdjust = tile.adjustBy((x, y - yOffset), "y")
-        self.moveWithCollision(stage, vx, vy, tiles[1:], xAdjust, yAdjust)
+                    return (xAdjust, tile.adjustBy((x, y - 1), "y"))
+        return (xAdjust, yAdjust)
         
 
     def updateBoundingBoxPoints(self, x, y):
