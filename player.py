@@ -31,82 +31,82 @@ class Player(object):
     def setvx(self, vx):
         self.vx = vx
 
-
     def move(self, stage):
         start = time.time()
         # print (self.vx, self.vy)
+        # print(self.onGround)
         # print(self.doubleJump)
         self.moveJump()
-        if (self.vx == 0 and self.vy == 0):
-            xAdjust, yAdjust = (0, 0)
-        else:
-            tiles = []
-            for tile in stage.tiles:
-                if (tile.inProximity(self.x, self.y, self.radius)):
-                    tiles.append(tile)
-            self.moveWithCollision(stage, self.vx, self.vy,
-                                tiles, 0, 0)
+        tiles = []
+        for tile in stage.tiles:
+            if (tile.inProximity(self.x, self.y, self.radius)):
+                tiles.append(tile)
+        x, y = self.moveWithCollision(stage, self.vx, self.vy, tiles)
+        self.x += x
+        self.y += y
         self.updateBoundingBoxPoints(self.x, self.y)
         # print (time.time() - start)
     
-    def moveWithCollision(self, stage, vx, vy, tiles, xAdjust, yAdjust):
-        self.updateBoundingBoxPoints(self.x + vx, self.y + vy)
-        if (len(tiles) == 0):
-            print(xAdjust, yAdjust)
-            self.x += vx + xAdjust
-            self.y += vy + yAdjust
-            return
-        tile = tiles[0]
-        xBorder = False
-        yBorder = False
-        xContact = False
-        if (self.x + vx - 5 < 0 or self.x + vx + self.w - 5 > stage.width):
-            xAdjust = -vx
-            xBorder = True
-        if (self.y + vy - 5 < 0 or self.y + vy + self.h - 5 > stage.height):
-            yAdjust = -vy
-            yBorder = True
-        collisionPoints = []
-        for i in range(len(self.boundingBoxPoints)):
-            x, y = self.boundingBoxPoints[i]
-            if (tile.isInTile(x,y)):
-                collisionPoints.append(i)
-        print (collisionPoints)
-        xAdjust, yAdjust = self.checkPoints(collisionPoints, tile, 
-                                xBorder, yBorder, xContact, xAdjust, yAdjust)
-        self.moveWithCollision(stage, vx, vy, tiles[1:], xAdjust, yAdjust)
-
-    def checkPoints (self, collisionPoints, tile, xBorder, yBorder, 
-                    xContact, xAdjust, yAdjust):
-        if (1 in collisionPoints or 2 in collisionPoints
-            and 0 not in collisionPoints and 3 not in collisionPoints):
-            self.onGround = True
-            self.doubleJump = False
-        else:
-            self.onGround = False
-        sidePoints = [0, 3]
-        vertPoints = [1, 2, 5, 6]
-        cornerPoints = [4, 7]
-        for i in sidePoints:
-            if (i in collisionPoints and not xBorder):
-                xContact = True
-                return (tile.adjustBy(self.boundingBoxPoints[i], "x"), yAdjust)
-        for i in vertPoints:
-            if (i in collisionPoints and not yBorder and not xContact):
-                x, y = self.boundingBoxPoints[i]
-                return (xAdjust, tile.adjustBy(self.boundingBoxPoints[i], "y"))
-        for i in cornerPoints:
-            if (i in collisionPoints and not xContact):
-                x, y = self.boundingBoxPoints[i]
-                if (abs(self.vx) > abs(self.vy)):
-                    if (self.vx > 0 and not xBorder):
-                        return (tile.adjustBy((x + 1, y), "x"), yAdjust)
-                    else:
-                        return (tile.adjustBy((x - 1, y), "x"), yAdjust)
-                elif (not yBorder):
-                    return (xAdjust, tile.adjustBy((x, y - 1), "y"))
-        return (xAdjust, yAdjust)
+    def moveWithCollision(self, stage, vx, vy, tiles):
+        if (vx == 0 and vy == 0):
+            return (0, 0)
+        vLength = int((vx ** 2 + vy ** 2) ** 0.5)
+        xStep = vx / vLength
+        yStep = vy / vLength
+        currentVX = 0
+        currentVY = 0
+        i = 0
+        print(vx, currentVX, vy, currentVY)
+        currentStep = 0
+        while (currentStep < vLength):
+            currentStep += 1
+            print(i)
+            currentVX += xStep
+            currentVY += yStep
+            collisions = self.checkCollisions(stage, currentVX, 
+                                        currentVY, tiles)
+            if (collisions["x"] or collisions["y"]):
+                print(f"{currentVX}/{vx}, {currentVY}/{vy}")
+                currentVX -= xStep
+                currentVY -= yStep
+                if (collisions["x"]):
+                    vx = currentVX
+                    self.vx = 0
+                if (collisions["y"]):
+                    vy = currentVY
+                    self.vy = 0
+                return (vx, vy)
+        self.vx = vx
+        self.vy = vy
+        return (vx, vy)
         
+
+
+    def checkCollisions(self, stage, vx, vy, tiles):
+        collisions = {"x": False, "y": False}
+        self.updateBoundingBoxPoints(self.x + vx, self.y + vy)
+        bBox = self.boundingBoxPoints
+        collisionPoints = []
+        for tile in tiles:
+            for i in range(len(bBox)):
+                x, y = bBox[i]
+                if tile.isInTile(x,y):
+                    collisionPoints += [i] 
+        print(collisionPoints)
+        if ((1 in collisionPoints and 0 not in collisionPoints) 
+            or (2 in collisionPoints and 3 not in collisionPoints)
+            or 5 in collisionPoints or 6 in collisionPoints
+            or 4 in collisionPoints or 7 in collisionPoints):
+            collisions["y"] = True
+        if (0 in collisionPoints or 3 in collisionPoints):
+            collisions["x"] = True
+
+        return collisions
+
+
+
+
+
 
     def updateBoundingBoxPoints(self, x, y):
         self.boundingBoxPoints = [(0 + x, 16 + y), (0 + x, 40 + y), 
@@ -123,6 +123,6 @@ class Player(object):
             self.y = 500
         if (not self.onGround):
             self.vy += 2.5
-        if (self.vy > 10):
-            self.vy = 10
+        if (self.vy > 20):
+            self.vy = 20
 

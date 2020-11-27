@@ -46,6 +46,7 @@ def doStep(app):
     if (app.keysPressed["Space"]):
         app.player.jump(app)
     app.player.move(app.stage)
+    
 
 def calculateFPS(app):
     millisecond = 1000
