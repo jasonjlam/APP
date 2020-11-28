@@ -19,6 +19,8 @@ def appStarted(app):
 def keyPressed(app, event):
     if ((event.key) in app.keysPressed):
         app.keysPressed[event.key] = True
+        if (event.key == "Space"):
+            app.player.isJumping = True
     elif (event.key == "p"):
         app.paused = not app.paused
     elif (event.key == "x"):
@@ -36,6 +38,7 @@ def timerFired(app):
 
 def doStep(app):
     app.start = time.time()
+    print (app.player.onGround)
     # print (app.keysPressed)
     if (app.keysPressed["a"]):
         app.player.setvx(-10)
@@ -44,7 +47,12 @@ def doStep(app):
     else:
         app.player.setvx(0)
     if (app.keysPressed["Space"]):
-        app.player.jump(app)
+        if (app.player.onGround):
+            app.player.jump(app)
+        elif (not app.player.onGround and not app.player.isJumping 
+            and not app.player.doubleJump):
+            print("pepega")
+            app.player.jump(app)
     app.player.move(app.stage)
     
 
@@ -71,6 +79,8 @@ def redrawAll(app, canvas):
         x0, y0, x1, y1 = tile.boundingBox
         canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
     # print(app.player.onGround)
+    canvas.create_text(400, 550, font = "Arial 15 bold", 
+        text = f"{app.player.onGround}, {app.player.doubleJump}")
     renderBoundingBoxPoints(canvas, app.player.boundingBoxPoints)
 
 def renderBoundingBoxPoints(canvas, boundingBoxPoints):

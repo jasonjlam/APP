@@ -9,7 +9,7 @@ class Player(object):
         self.w = 48
         self.h = 44
         self.jumpVelocity = -30
-        self.onGround = False
+        self.onGround = True
         self.isJumping = False
         self.doubleJump = False
         self.radius = 25
@@ -19,7 +19,6 @@ class Player(object):
         if (self.onGround):
             app.audio.jumpAudio()
             self.vy = self.jumpVelocity
-            self.isJumping = True
             self.onGround = False
         elif (not self.doubleJump and not self.isJumping ):
             app.audio.jumpAudio()
@@ -36,6 +35,9 @@ class Player(object):
         # print (self.vx, self.vy)
         # print(self.onGround)
         # print(self.doubleJump)
+        print(self.vy)
+        if (self.vy < 0):
+            self.onGround = False
         self.moveJump()
         tiles = []
         for tile in stage.tiles:
@@ -56,17 +58,14 @@ class Player(object):
         currentVX = 0
         currentVY = 0
         i = 0
-        print(vx, currentVX, vy, currentVY)
         currentStep = 0
         while (currentStep < vLength):
             currentStep += 1
-            print(i)
             currentVX += xStep
             currentVY += yStep
             collisions = self.checkCollisions(stage, currentVX, 
                                         currentVY, tiles)
             if (collisions["x"] or collisions["y"]):
-                print(f"{currentVX}/{vx}, {currentVY}/{vy}")
                 currentVX -= xStep
                 currentVY -= yStep
                 if (collisions["x"]):
@@ -79,8 +78,6 @@ class Player(object):
         self.vx = vx
         self.vy = vy
         return (vx, vy)
-        
-
 
     def checkCollisions(self, stage, vx, vy, tiles):
         collisions = {"x": False, "y": False}
@@ -92,31 +89,49 @@ class Player(object):
                 x, y = bBox[i]
                 if tile.isInTile(x,y):
                     collisionPoints += [i] 
-        print(collisionPoints)
+        # print(collisionPoints)
+        # 0 = middle left, 1 = bottom left, 2 = bottom right, 3 = middle right,
+        # 4 = top right corner, 5 = top right, 6 = top left, 
+        # 7 = top left corner
+        self.checkGround(vx, vy, collisionPoints)
+        if (5 in collisionPoints or 6 in collisionPoints):
+            collisions["y"] = True
+        if (4 in collisionPoints or 7 in collisionPoints
+            or 5 in collisionPoints or 6 in collisionPoints):
+            if (vy < 0):
+                collisions["y"] = True
+            else:
+                collisions["x"] = True
+        if ((0 in collisionPoints and 1 in collisionPoints) 
+            or (2 in collisionPoints and 3 in collisionPoints)):
+            collisions["x"] = True
         if ((1 in collisionPoints and 0 not in collisionPoints) 
-            or (2 in collisionPoints and 3 not in collisionPoints)
-            or 5 in collisionPoints or 6 in collisionPoints
-            or 4 in collisionPoints or 7 in collisionPoints):
+            or (2 in collisionPoints and 3 not in collisionPoints)):
+            if (vy < 0):
+                collisions["x"] = True
             collisions["y"] = True
         if (0 in collisionPoints or 3 in collisionPoints):
             collisions["x"] = True
-
         return collisions
 
-
-
-
-
+    def checkGround(self, vx, vy, collisionPoints):
+        grounded = (1 in collisionPoints 
+                        or 2 in collisionPoints and vy < 0)
+        if (grounded):
+            print("ON THE GROUND")
+            self.doubleJump = False
+            self.onGround = grounded
 
     def updateBoundingBoxPoints(self, x, y):
-        self.boundingBoxPoints = [(0 + x, 16 + y), (0 + x, 40 + y), 
-                        (46 + x, 40 + y), (46 + x, 16 + y), (42 + x, 4 + y), 
+        self.boundingBoxPoints = [(0 + x, 30 + y), (2 + x, 40 + y), 
+                        (44 + x, 40 + y), (46 + x, 30 + y), (42 + x, 4 + y), 
                         (30 + x, 0 + y), (16 + x, 0 + y), (6 + x, 4 + y)]
 
 
     def moveJump(self):
         if (self.vy < -9 and not self.isJumping):
             self.vy = -9
+            self.onGround = False
         if (self.y > 500):
             self.onGround = True
             self.doubleJump = False
