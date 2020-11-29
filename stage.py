@@ -1,14 +1,30 @@
 import random
 
 class Stage(object):
-    def __init__(self, width, height):
+    def __init__(self, width, height, file):
         self.width = width
         self.height = height
-        self.tileSize = 50
-        self.rowTiles = height / self.tileSize
-        self.colTiles = width / self.tileSize
-        self.numTiles = 20
-        self.generateTiles()
+        self.tileSize = 40
+        self.rowTiles = height // self.tileSize
+        self.colTiles = width // self.tileSize
+        self.generateTilesFromCSV(file)
+        # print(self.rowTiles, self.colTiles)
+        # print (self.tiles)
+
+    def generateTilesFromCSV(self, file):
+        self.tiles = set()
+        CSV = readCSV(file)
+        # print(CSV)
+        # print(range(len(CSV)), range(len(CSV[0])))
+        for row in range(len(CSV)):
+            for col in range(len(CSV[0])):
+                # print(CSV[row][col])
+                if (CSV[row][col] == 0):
+                    # print("Generating tile")
+                    x = col * self.tileSize
+                    y = row * self.tileSize
+                    self.tiles.add(Square(x,y, self.tileSize))
+
 
     def generateTiles(self):
         self.tiles = set()
@@ -33,9 +49,9 @@ class Tile(object):
     def centerOfTile(self):
         return (self.x, self.y)
     
-    def inProximity(self, x, y, r):
+    def inProximity(self, x, y, d):
         cx, cy = self.centerOfTile()
-        return ((x - cx) ** 2 + (y - cy) ** 2) < (r + self.size) ** 2
+        return abs(cx - x) < d and abs(cy - y) < d
 
 class Square(Tile):
     def __init__(self, x, y, size):
@@ -50,17 +66,19 @@ class Square(Tile):
         # print(self.boundingBox)
         x0, y0, x1, y1 = self.boundingBox
         x2, y2, x3, y3 = boundingBox
-        # print(x0, y0, x1, y1, x2, y2, x3, y3)
-        # if (not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)):
-            # print("Intersect")
         return not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)
 
-def boxesCheck(x0, y0, x1, y1, x2, y2, x3, y3):
-    return not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)
-print (boxesCheck(200, 300, 400, 500, 371.0, 463.0, 416.0, 464.0))
-print (boxesCheck(200, 300, 400, 500, 370.0, 465.0, 394.0, 501.0))
-print (boxesCheck(200, 300, 400, 500, 395.0, 465.0, 417.0, 501.0))
-print (boxesCheck(200, 300, 400, 500, 371.0, 501.0, 416.0, 505.0))
+def readCSV(file):
+    f = open(file, "r")
+    lines = f.readlines()
+    result = []
+    for line in lines:
+        result += [list(map(int, line.strip().split(",")))]
+    f.close()
+    return result
+# print (readCSV("stages/1.csv"))
+
+
 
 
 

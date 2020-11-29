@@ -18,7 +18,7 @@ class Player(object):
         self.doubleJumpPrimed = False
 
     def jump(self, app):
-        print(self.doubleJumpPrimed)
+        # print(self.doubleJumpPrimed)
         if (self.jumps > 1 and self.vy > -3 or 
             (self.jumps > 0  and self.vy > -3 and self.doubleJumpPrimed)):
             app.audio.jumpAudio()
@@ -38,13 +38,18 @@ class Player(object):
         if (self.vy < 0):
             self.onGround = False
         self.moveJump()
-        x, y = self.moveWithCollision(stage, self.vx, self.vy, stage.tiles)
+        tiles = []
+        for tile in stage.tiles:
+            if (tile.inProximity(self.x + 25, self.y + 25, 70)):
+                tiles += [tile]
+        x, y = self.moveWithCollision(stage, self.vx, self.vy, tiles)
         self.x += x
         self.y += y
         self.updateBoundingBoxes(self.x, self.y)
         # print (time.time() - start)
     
     def moveWithCollision(self, stage, vx, vy, tiles):
+        print(tiles)
         if (vx == 0 and vy == 0):
             return (0, 0)
         vLength = int((vx ** 2 + vy ** 2) ** 0.5) * 2
@@ -60,10 +65,8 @@ class Player(object):
             currentVY += yStep
             collisions = self.checkCollisions(stage, currentVX, 
                                         currentVY, tiles)
-            # print(collisions)
             for key in collisions:
                 if (collisions[key]):
-                    # print("found a collision")
                     currentVX -= xStep
                     currentVY -= yStep
                     if (collisions["left"] or collisions["right"]):

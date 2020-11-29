@@ -12,7 +12,7 @@ def appStarted(app):
     app.FPS = 0
     app.start = 0
     app.kirbySprite = ImageTk.PhotoImage(app.loadImage("kirby.png"))
-    app.stage = Stage(app.width, app.height)
+    app.stage = Stage(app.width, app.height, "stages/1.csv")
     app.paused = False
     app.audio = Audio()
 
@@ -67,16 +67,14 @@ def calculateFPS(app):
 def redrawAll(app, canvas):
     canvas.create_image(app.player.x, app.player.y, 
                         image = app.kirbySprite, anchor = "nw")
-    canvas.create_text(20, 20, font = "Arial 15 bold", 
-                        text = int(calculateFPS(app)))
     for tile in app.stage.tiles:
         x0, y0, x1, y1 = tile.boundingBox
         canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
     # print(app.player.onGround)
     renderBoundingBoxPoints(canvas, app.player.boundingBoxes)
-    canvas.create_rectangle(200, 300, 400, 500, width = 1, outline = "green")
-    canvas.create_rectangle(370.0, 465.0, 394.0, 501.0, width = 1, outline = "green")
-    renderTileBoxes(app, canvas)
+    # renderTileBoxes(app, canvas)
+    canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
+                        text = int(calculateFPS(app)))
 
 def renderTileBoxes(app, canvas):
     for tile in app.stage.tiles:
@@ -90,7 +88,7 @@ def renderBoundingBoxPoints(canvas, boundingBoxes):
 
 
 def main():
-    runApp(width = 800, height = 600)
+    runApp(width = 1200, height = 800)
 
 if __name__ == '__main__':
     main()
