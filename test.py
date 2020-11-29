@@ -25,12 +25,16 @@ def keyPressed(app, event):
         app.paused = not app.paused
     elif (event.key == "x"):
         doStep(app)
+    elif (event.key == "r"):
+        appStarted(app)
 
 def keyReleased(app, event):
     if ((event.key) in app.keysPressed):
         app.keysPressed[event.key] = False
         if (event.key == "Space"):
             app.player.isJumping = False
+            if (app.player.jumps == 1):
+                app.player.doubleJumpPrimed = True
 
 def timerFired(app):
     if (not app.paused):
@@ -38,7 +42,6 @@ def timerFired(app):
 
 def doStep(app):
     app.start = time.time()
-    print (app.player.onGround)
     # print (app.keysPressed)
     if (app.keysPressed["a"]):
         app.player.setvx(-10)
@@ -46,13 +49,8 @@ def doStep(app):
         app.player.setvx(10)
     else:
         app.player.setvx(0)
-    if (app.keysPressed["Space"]):
-        if (app.player.onGround):
-            app.player.jump(app)
-        elif (not app.player.onGround and not app.player.isJumping 
-            and not app.player.doubleJump):
-            print("pepega")
-            app.player.jump(app)
+    if (app.player.isJumping):
+        app.player.jump(app)
     app.player.move(app.stage)
     
 
@@ -67,27 +65,29 @@ def calculateFPS(app):
     # return alpha * FPS + beta * snapshotFPS
 
 def redrawAll(app, canvas):
-    # if (len(canvas.find_all()) == 1):
-    #     renderInitialImages(app, canvas)
     canvas.create_image(app.player.x, app.player.y, 
                         image = app.kirbySprite, anchor = "nw")
-    # # canvas.create_rectangle(app.player.x, app.player.y, app.player.x + 10,
-    # #                        app.player.y + 10)
     canvas.create_text(20, 20, font = "Arial 15 bold", 
                         text = int(calculateFPS(app)))
     for tile in app.stage.tiles:
         x0, y0, x1, y1 = tile.boundingBox
         canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
     # print(app.player.onGround)
-    canvas.create_text(400, 550, font = "Arial 15 bold", 
-        text = f"{app.player.onGround}, {app.player.doubleJump}")
-    renderBoundingBoxPoints(canvas, app.player.boundingBoxPoints)
+    renderBoundingBoxPoints(canvas, app.player.boundingBoxes)
+    canvas.create_rectangle(200, 300, 400, 500, width = 1, outline = "green")
+    canvas.create_rectangle(370.0, 465.0, 394.0, 501.0, width = 1, outline = "green")
+    renderTileBoxes(app, canvas)
 
-def renderBoundingBoxPoints(canvas, boundingBoxPoints):
-    for i in range(len(boundingBoxPoints)):
-        x, y = boundingBoxPoints[i]
-        canvas.create_text(x, y, font = "Arial 8", 
-                                fill = "purple", text = str(i))
+def renderTileBoxes(app, canvas):
+    for tile in app.stage.tiles:
+        x0, y0, x1, y1 = tile.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")
+
+def renderBoundingBoxPoints(canvas, boundingBoxes):
+    for box in boundingBoxes:
+        x0, y0, x1, y1 = boundingBoxes[box]
+        canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")
+
 
 def main():
     runApp(width = 800, height = 600)

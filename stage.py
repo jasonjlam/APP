@@ -4,10 +4,10 @@ class Stage(object):
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.tileSize = 100
+        self.tileSize = 50
         self.rowTiles = height / self.tileSize
         self.colTiles = width / self.tileSize
-        self.numTiles = 10
+        self.numTiles = 20
         self.generateTiles()
 
     def generateTiles(self):
@@ -17,6 +17,10 @@ class Stage(object):
             y = random.randint(0, self.rowTiles - 1) * self.tileSize
             self.tiles.add(Square(x, y, self.tileSize))
             print(f"Generated tile at ({x}, {y})")
+        for i in range(self.width // self.tileSize):
+            x = i * self.tileSize
+            y = self.height - self.tileSize
+            self.tiles.add(Square(x, y, self.tileSize))
 
 class Tile(object):
     def __init__(self, x, y, size):
@@ -42,24 +46,21 @@ class Square(Tile):
     def centerOfTile(self):
         return (self.x + self.size / 2, self.y + self.size / 2)
 
-    def isInTile(self, x, y):
+    def boxesIntersect(self, boundingBox):
+        # print(self.boundingBox)
         x0, y0, x1, y1 = self.boundingBox
-        return (x > x0 and x < x1 and y > y0 and y < y1)
+        x2, y2, x3, y3 = boundingBox
+        # print(x0, y0, x1, y1, x2, y2, x3, y3)
+        # if (not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)):
+            # print("Intersect")
+        return not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)
 
-    def adjustBy(self, point, mode):
-        x0, y0, x1, y1 = self.boundingBox
-        # print (self.boundingBox)
-        # print (point)
-        x, y = point
-        if (mode == "y"):
-            if (abs(y- y0) < abs(y1 - y)):
-                # print (y, y0)
-                return y0 - y
-            else:
-                return y1 - y
-        if (mode == "x"):
-            if (abs(x - x0) < abs(x1 - x)):
-                return x0 - x
-            else:
-                return x1 - x
+def boxesCheck(x0, y0, x1, y1, x2, y2, x3, y3):
+    return not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)
+print (boxesCheck(200, 300, 400, 500, 371.0, 463.0, 416.0, 464.0))
+print (boxesCheck(200, 300, 400, 500, 370.0, 465.0, 394.0, 501.0))
+print (boxesCheck(200, 300, 400, 500, 395.0, 465.0, 417.0, 501.0))
+print (boxesCheck(200, 300, 400, 500, 371.0, 501.0, 416.0, 505.0))
+
+
 

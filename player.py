@@ -12,20 +12,19 @@ class Player(object):
         self.jumpVelocity = -30
         self.onGround = True
         self.isJumping = False
-        self.doubleJump = False
+        self.jumps = 2
         self.radius = 50
         self.updateBoundingBoxes(0,0)
+        self.doubleJumpPrimed = False
 
     def jump(self, app):
-        if (self.onGround):
+        print(self.doubleJumpPrimed)
+        if (self.jumps > 1 and self.vy > -3 or 
+            (self.jumps > 0  and self.vy > -3 and self.doubleJumpPrimed)):
             app.audio.jumpAudio()
             self.vy = self.jumpVelocity
             self.onGround = False
-        elif (not self.doubleJump and not self.isJumping ):
-            app.audio.jumpAudio()
-            self.vy = self.jumpVelocity
-            self.isJumping = True
-            self.doubleJump = True
+            self.jumps -= 1
 
 
     def setvx(self, vx):
@@ -99,7 +98,8 @@ class Player(object):
                         collisions["right"] = True
         if (collisions["bot"]):
             self.onGround = True
-            self.doubleJump = False
+            self.jumps = 2
+            self.doubleJumpPrimed = False
         else:
             self.onGround = False
         return collisions
@@ -109,7 +109,6 @@ class Player(object):
         "left": (0 + x, 2 + y, 24 + x, 40 + y), 
         "right": (25 + x, 2 + y, 47 + x, 40 + y),
         "bot": (1 + x, 41 + y, 46 + x, 42 + y)}
-
 
     def moveJump(self):
         if (self.vy < -9 and not self.isJumping):
