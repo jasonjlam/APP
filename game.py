@@ -1,18 +1,19 @@
 from cmu_112_graphics import *
 from player import *
-from stage import *
+from stages import *
 from audio import *
 import time
 
 def appStarted(app):
-    app.player = Player(500, 500)
+    app.player = Player(100, 700)
     app.keysPressed = {"a": False, "d": False, "w": False, "s": False, 
                        "Space": False, "f": False}
     app.timerDelay = 20
     app.FPS = 0
     app.start = 0
     app.kirbySprite = ImageTk.PhotoImage(app.loadImage("kirby.png"))
-    app.stage = Stage(app.width, app.height, "stages/1.csv")
+    app.currentStage = 1
+    app.stage = Stage1(app.width, app.height)
     app.paused = False
     app.audio = Audio()
 
@@ -52,6 +53,8 @@ def doStep(app):
     if (app.player.isJumping):
         app.player.jump(app)
     app.player.move(app.stage)
+    for tile in app.stage.movingTiles:
+        tile.move()
     
 
 def calculateFPS(app):
@@ -72,12 +75,12 @@ def redrawAll(app, canvas):
         canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
     # print(app.player.onGround)
     renderBoundingBoxPoints(canvas, app.player.boundingBoxes)
-    # renderTileBoxes(app, canvas)
+    renderTileBoxes(app, canvas)
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
                         text = int(calculateFPS(app)))
 
 def renderTileBoxes(app, canvas):
-    for tile in app.stage.tiles:
+    for tile in app.stage.getTiles():
         x0, y0, x1, y1 = tile.boundingBox
         canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")
 

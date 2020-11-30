@@ -1,4 +1,11 @@
+# Has base class Stage, which defines each "zone" displayed on screen.
+# Subclasses Stage1, Stage2... represent each stage and their individual
+# assets/entities.
+# Stages import much of their tileset from /stages/(n).csv
+# These files are created with Tiled
+
 import random
+from tiles import *
 
 class Stage(object):
     def __init__(self, width, height, file):
@@ -8,22 +15,25 @@ class Stage(object):
         self.rowTiles = height // self.tileSize
         self.colTiles = width // self.tileSize
         self.generateTilesFromCSV(file)
+        self.movingTiles = []
         # print(self.rowTiles, self.colTiles)
         # print (self.tiles)
 
     def generateTilesFromCSV(self, file):
-        self.tiles = set()
+        self.tiles = []
         CSV = readCSV(file)
+        total = 0
         # print(CSV)
         # print(range(len(CSV)), range(len(CSV[0])))
         for row in range(len(CSV)):
-            for col in range(len(CSV[0])):
+            for col in range(len(CSV[row])):
                 # print(CSV[row][col])
                 if (CSV[row][col] == 0):
                     # print("Generating tile")
                     x = col * self.tileSize
                     y = row * self.tileSize
-                    self.tiles.add(Square(x,y, self.tileSize))
+                    self.tiles.append(Square(x,y, self.tileSize))
+        print (total)
 
 
     def generateTiles(self):
@@ -38,35 +48,8 @@ class Stage(object):
             y = self.height - self.tileSize
             self.tiles.add(Square(x, y, self.tileSize))
 
-class Tile(object):
-    def __init__(self, x, y, size):
-        self.x = x
-        self.y = y
-        self.size = size
-
-    def __repr__(self):
-        return f"Tile at ({self.x}, {self.y})"
-    def centerOfTile(self):
-        return (self.x, self.y)
-    
-    def inProximity(self, x, y, d):
-        cx, cy = self.centerOfTile()
-        return abs(cx - x) < d and abs(cy - y) < d
-
-class Square(Tile):
-    def __init__(self, x, y, size):
-        super().__init__(x,y, size)
-        self.boundingBox = (x, y, x + size, y + size)
-        self.size = size
-
-    def centerOfTile(self):
-        return (self.x + self.size / 2, self.y + self.size / 2)
-
-    def boxesIntersect(self, boundingBox):
-        # print(self.boundingBox)
-        x0, y0, x1, y1 = self.boundingBox
-        x2, y2, x3, y3 = boundingBox
-        return not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)
+    def getTiles(self):
+        return self.tiles + self.movingTiles
 
 def readCSV(file):
     f = open(file, "r")
@@ -76,6 +59,20 @@ def readCSV(file):
         result += [list(map(int, line.strip().split(",")))]
     f.close()
     return result
+
+class Stage1(Stage):
+    def __init__(self, width, height):
+        super().__init__(width, height, "stages/1.csv")
+        self.generateAdditionalTiles()
+
+    def generateAdditionalTiles(self):
+        platform1 = MovingPlatform(18 * 40, 6 * 40, 18 * 40, 15 * 40, 60, 
+                                    0, 4)
+        self.movingTiles.append(platform1)
+
+class Stage2(stage):
+    def __init__(self, width, height):
+        super().__init__(width, height, "stages/1.csv")
 # print (readCSV("stages/1.csv"))
 
 

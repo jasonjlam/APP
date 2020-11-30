@@ -1,3 +1,5 @@
+# Handles all audio calls using pygame
+
 import pygame.mixer
 
 class Audio (object):
