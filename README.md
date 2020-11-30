@@ -1,6 +1,5 @@
-# IWBTP
-I Wanna Be the Programmer [name subject to change]
-  
+#APP 
+Another Platformer Project
   
 15-112 Fall 2020 Term Project
 
