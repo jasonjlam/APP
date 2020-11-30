@@ -1,5 +1,5 @@
 # IWBTP
-I Wanna Be the Programmer <name subject to change>
+I Wanna Be the Programmer [name subject to change]
   
   
 15-112 Fall 2020 Term Project
