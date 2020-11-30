@@ -52,10 +52,19 @@ def doStep(app):
         app.player.setvx(0)
     if (app.player.isJumping):
         app.player.jump(app)
-    app.player.move(app.stage)
     for tile in app.stage.movingTiles:
         tile.move()
-    
+    border = app.player.move(app.stage)
+    if (border != 0):
+        changeStage(app, border)
+
+def changeStage(app, border):
+    print(border)
+    app.currentStage += border
+    print(app.currentStage)
+    app.stage = createStage(app.currentStage, app.width, app.height)
+    print(app.stage)
+
 
 def calculateFPS(app):
     millisecond = 1000

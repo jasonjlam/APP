@@ -22,7 +22,6 @@ class Stage(object):
     def generateTilesFromCSV(self, file):
         self.tiles = []
         CSV = readCSV(file)
-        total = 0
         # print(CSV)
         # print(range(len(CSV)), range(len(CSV[0])))
         for row in range(len(CSV)):
@@ -33,8 +32,6 @@ class Stage(object):
                     x = col * self.tileSize
                     y = row * self.tileSize
                     self.tiles.append(Square(x,y, self.tileSize))
-        print (total)
-
 
     def generateTiles(self):
         self.tiles = set()
@@ -51,6 +48,13 @@ class Stage(object):
     def getTiles(self):
         return self.tiles + self.movingTiles
 
+def createStage(stage, width, height):
+    w = width
+    h = height
+    stages = {1: Stage1(w, h), 2:Stage2(w, h), 3: Stage3(w,h), 4: Stage4(w,h),
+            5: Stage5(w, h)}
+    return stages[stage]
+
 def readCSV(file):
     f = open(file, "r")
     lines = f.readlines()
@@ -63,6 +67,8 @@ def readCSV(file):
 class Stage1(Stage):
     def __init__(self, width, height):
         super().__init__(width, height, "stages/1.csv")
+        self.entrance = "left"
+        self.exit = "right"
         self.generateAdditionalTiles()
 
     def generateAdditionalTiles(self):
@@ -70,9 +76,29 @@ class Stage1(Stage):
                                     0, 4)
         self.movingTiles.append(platform1)
 
-class Stage2(stage):
+class Stage2(Stage):
     def __init__(self, width, height):
-        super().__init__(width, height, "stages/1.csv")
+        super().__init__(width, height, "stages/2.csv")
+        self.entrance = "left"
+        self.exit = "right"
+
+class Stage3(Stage):
+    def __init__(self, width, height):
+        super().__init__(width, height, "stages/3.csv")
+        self.entrance = "left"
+        self.exit = "top"
+
+class Stage4(Stage):
+    def __init__(self, width, height):
+        super().__init__(width, height, "stages/4.csv")
+        self.entrance = "bot"
+        self.exit = "top"
+
+class Stage5(Stage):
+    def __init__(self, width, height):
+        super().__init__(width, height, "stages/5.csv")
+        self.entrance = "bot"
+        self.exit = "top"
 # print (readCSV("stages/1.csv"))
 
 

@@ -39,7 +39,7 @@ class Player(object):
         # print (self.vx, self.vy)
         # print(self.onGround)
         # print(self.doubleJump)
-        print (self.onPlatform)
+        # print (self.onPlatform)
         if (self.vy < 0):
             self.onGround = False
         self.moveJump()
@@ -51,9 +51,10 @@ class Player(object):
         # print(self.x, self.y)
         self.updateBoundingBoxes(self.x, self.y)
         # print (time.time() - start)
+        return self.checkBorders(stage)
     
     def moveWithCollision(self, stage, vx, vy, tiles, depth = 0):
-        print("Start", vx)
+        # print("Start", vx)
         if (vx == 0 and vy == 0):
             return (0, 0)
         vLength = int(vx ** 2 + vy ** 2) + 1
@@ -89,7 +90,7 @@ class Player(object):
                             else:
                                 currentVY += collisions["vy"]
                             self.vy = collisions["vy"]
-                            print(currentVX, self.vx, currentVY, self.vy)
+                            # print(currentVX, self.vx, currentVY, self.vy)
                         vy = currentVY
                         self.x += vx
                         self.y += vy
@@ -115,7 +116,7 @@ class Player(object):
                 if (tile.boxesIntersect(tile.boundingBox, 
                                         boundingBox["bot"], debug)):
                     collisions["bot"] = True
-                    print("bot")
+                    # print("bot")
                     if (isinstance(tile, MovingPlatform)):
                         collisions["platform"] = True
                         self.onPlatform = True
@@ -161,4 +162,29 @@ class Player(object):
             self.vy += 3
         if (self.vy > 25):
             self.vy = 25
+
+    def checkBorders(self, stage):
+        border = None
+        if (self.x < -25):
+            border = "left"
+            self.x = stage.width - 23
+        elif (self.x > stage.width - 25):
+            border = "right"
+            self.x = -23
+        elif (self.y < -25):
+            border = "top"
+            self.y = stage.height - 23
+            self.vy += -10
+        elif (self.y > stage.height + 25):
+            border = "bot"
+            self.y = -23
+        print(border, stage.entrance, stage.exit)
+        if (border == stage.exit):
+            return 1
+        elif (border == stage.entrance):
+            return -1
+        else:
+            return 0
+
+
 
