@@ -52,9 +52,10 @@ def doStep(app):
         app.player.setvx(0)
     if (app.player.isJumping):
         app.player.jump(app)
+    border = app.player.move(app.stage)
     for tile in app.stage.movingTiles:
         tile.move()
-    border = app.player.move(app.stage)
+        print(tile.boundingBox)
     if (border != 0):
         changeStage(app, border)
 
@@ -87,6 +88,8 @@ def redrawAll(app, canvas):
     renderTileBoxes(app, canvas)
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
                         text = int(calculateFPS(app)))
+    canvas.create_text(30, 500, font = "Arial 15 bold", 
+                        text = app.player.onPlatform)
 
 def renderTileBoxes(app, canvas):
     for tile in app.stage.getTiles():

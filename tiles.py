@@ -4,6 +4,8 @@ class Tile(object):
     def __init__(self, x, y, size):
         self.x = x
         self.y = y
+        self.lastx = 0
+        self.lasty = 0
         self.size = size
 
     def __repr__(self):
@@ -11,16 +13,19 @@ class Tile(object):
     def centerOfTile(self):
         return (self.x, self.y)
     
-    def inProximity(self, x, y, d):
+    def inProximity(self, x, y):
+        d = self.size + 25
         cx, cy = self.centerOfTile()
         return abs(cx - x) < d and abs(cy - y) < d
 
     def boxesIntersect(self, box1, box2, debug = False):
-        # if (debug):
-            # print(box1, box2)
+        if (debug):
+            print(box1, box2)
         x0, y0, x1, y1 = box1
         x2, y2, x3, y3 = box2
-        return not (x2 >= x1 or x0 >= x3 or y2 >= y1 or y0 >= y3)
+        offset = 0.1
+        return not (x2 - offset >= x1 or x0 - offset >= x3 
+                or y2 - offset >= y1 or y0 - offset >= y3)
 
 class Square(Tile):
     def __init__(self, x, y, size):
@@ -37,6 +42,7 @@ class MovingPlatform(Tile):
         super().__init__(x0 + vx, y0 + vy, size)
         self.thickness = 10
         self.boundingBox = (x0, y0, x0 + size, y0 + self.thickness)
+        self.oldBoundingBox = self.boundingBox
         self.vx = vx
         self.vy = vy 
         self.x0 = x0
@@ -44,13 +50,26 @@ class MovingPlatform(Tile):
         self.x1 = x1
         self.y1 = y1
 
+    def centerOfTile(self):
+        return (self.x + self.size / 2, self.y + self.thickness / 2)
+
     def move(self):
+        self.oldBoundingBox = self.boundingBox
+        self.lastx = self.x
+        self.lasty = self.y
         self.x += self.vx
         self.y += self.vy
         if ((self.x == self.x1 or self.x == self.x0) and self.vx != 0 ):
             self.vx = -self.vx
         if ((self.y == self.y1 or self.y == self.y0) and self.vy != 0 ):
             self.vy = -self.vy
+        print (self.boundingBox)
         self.boundingBox = (self.x, self.y, self.x + self.size, 
                             self.y + self.thickness)
+
+    def getLastVX(self):
+        return self.x - self.lastx
+
+    def getLastVY(self):
+        return self.y - self.lasty
 

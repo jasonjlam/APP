@@ -16,6 +16,7 @@ class Stage(object):
         self.colTiles = width // self.tileSize
         self.generateTilesFromCSV(file)
         self.movingTiles = []
+        self.generateAdditionalTiles()
         # print(self.rowTiles, self.colTiles)
         # print (self.tiles)
 
@@ -45,6 +46,9 @@ class Stage(object):
             y = self.height - self.tileSize
             self.tiles.add(Square(x, y, self.tileSize))
 
+    def generateAdditionalTiles(self):
+        pass
+
     def getTiles(self):
         return self.tiles + self.movingTiles
 
@@ -69,10 +73,9 @@ class Stage1(Stage):
         super().__init__(width, height, "stages/1.csv")
         self.entrance = "left"
         self.exit = "right"
-        self.generateAdditionalTiles()
 
     def generateAdditionalTiles(self):
-        platform1 = MovingPlatform(18 * 40, 6 * 40, 18 * 40, 15 * 40, 60, 
+        platform1 = MovingPlatform(18 * 40, 6 * 40, 18 * 40, 15 * 40, 120, 
                                     0, 4)
         self.movingTiles.append(platform1)
 
@@ -87,6 +90,11 @@ class Stage3(Stage):
         super().__init__(width, height, "stages/3.csv")
         self.entrance = "left"
         self.exit = "top"
+
+    def generateAdditionalTiles(self):
+        platform1 = MovingPlatform(1 * 40, 11 * 40, 11 * 40, 11 * 40, 80, 
+                                4, 0)
+        self.movingTiles.append(platform1)
 
 class Stage4(Stage):
     def __init__(self, width, height):
