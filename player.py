@@ -21,6 +21,14 @@ class Player(object):
         self.jumps = 2
         self.updateBoundingBoxes(0,0)
         self.doubleJumpPrimed = False
+        self.facing = 1
+        self.projectiles = []
+
+    def shoot(self):
+        if (len(self.projectiles) < 5):
+            offset = 25
+            self.projectiles += [PlayerProjectile(self.x + offset + 
+                self.facing * offset, self.y + 15, self.facing * 16)]
 
     def jump(self, app):
         # print(self.doubleJumpPrimed)
@@ -207,11 +215,47 @@ class Player(object):
             self.y = -23
         # print(border, stage.entrance, stage.exit)
         if (border == stage.exit):
+            self.projectiles = []
             return 1
         elif (border == stage.entrance):
+            self.projectiles = []
             return -1
         else:
             return 0
 
+class PlayerProjectile(object):
+    def __init__(self, x, y, vx):
+        self.x = x
+        self.y = y
+        self.r = 10
+        self.vx = vx
+        r = self.r * 3 / 4
+        self.boundingBox = (x - r, y - r, x + r, y - r)
 
+    def __hash__(self):
+        return hash(self.x, self.y, self.vy)
 
+    def __repr__(self):
+        return f"Projectile at ({self.x}, {self.y}), velocity = {self.vx}"
+
+    def move(self, app):
+        projectiles = app.player.projectiles
+        stage = app.stage
+        self.x += self.vx
+        x = self.x
+        y = self.y
+        r = 3 * self.r / 4
+        self.boundingBox = (x - r, y - r, x + r, y + r)
+        if (self.x < 0 or self.x > stage.width):
+            projectiles.remove(self)
+            return
+        tiles = []
+        for tile in stage.tiles:
+            if (tile.inProximity(x, self.y, 40)):
+                tiles += [tile]
+        for tile in tiles:
+            if (tile.boxesIntersect(self.boundingBox, tile.boundingBox)):
+                projectiles.remove(self)
+                if (isinstance(tile, Save)):
+                    return "save"
+                return

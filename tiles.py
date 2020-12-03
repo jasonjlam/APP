@@ -10,11 +10,12 @@ class Tile(object):
 
     def __repr__(self):
         return f"Tile at ({self.x}, {self.y})"
+
     def centerOfTile(self):
         return (self.x, self.y)
     
-    def inProximity(self, x, y):
-        d = self.size + 25
+    def inProximity(self, x, y, extra = 25):
+        d = self.size + extra
         cx, cy = self.centerOfTile()
         return abs(cx - x) < d and abs(cy - y) < d
 
@@ -72,4 +73,10 @@ class MovingPlatform(Tile):
 
     def getLastVY(self):
         return self.y - self.lasty
+
+class Save(Square):
+    def __init__(self, x, y, size, stage):
+        super().__init__(x,y, size)
+        self.stage = stage
+
 

@@ -84,6 +84,10 @@ class Stage2(Stage):
         super().__init__(width, height, "stages/2.csv")
         self.entrance = "left"
         self.exit = "right"
+    
+    def generateAdditionalTiles(self):
+        save1 = Save(200, 650, 20, 2)
+        self.tiles.append(save1)
 
 class Stage3(Stage):
     def __init__(self, width, height):
