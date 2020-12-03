@@ -1,3 +1,5 @@
+# Main game
+
 from cmu_112_graphics import *
 from player import *
 from stages import *
@@ -93,27 +95,38 @@ def calculateFPS(app):
     # return alpha * FPS + beta * snapshotFPS
 
 def redrawAll(app, canvas):
-    renderCharacter(app, canvas)
-    for tile in app.stage.getTiles():
-        x0, y0, x1, y1 = tile.boundingBox
-        canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
+    drawCharacter(app, canvas)
+    drawTiles(app, canvas)
+    drawEntities(app, canvas)
     if (app.showBoundingBoxes):
-        renderBoundingBoxes(app, canvas)
+        drawBoundingBoxes(app, canvas)
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
                         text = int(calculateFPS(app)))
     canvas.create_text(30, 500, font = "Arial 15 bold", 
                         text = str(app.player.platform))
 
-def renderCharacter(app, canvas):
+def drawTiles(app, canvas):
+    for tile in app.stage.getTiles():
+        x0, y0, x1, y1 = tile.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
+        
+def drawEntities(app, canvas):
+    for entity in app.stage.entities:
+        entity.draw(canvas)
+
+def drawCharacter(app, canvas):
     for projectile in app.player.projectiles:
         x = projectile.x
         y = projectile.y
         r = projectile.r
         canvas.create_oval(x - r, y - r, x + r, y + r, fill = "yellow")
-    canvas.create_image(app.player.x, app.player.y, 
+    if (app.player.death):
+        canvas.create_text(app.player.x, app.player.y, fill = "red", text = "DED")
+    else:    
+        canvas.create_image(app.player.x, app.player.y, 
                         image = app.kirbySprite, anchor = "nw")
 
-def renderBoundingBoxes(app, canvas):
+def drawBoundingBoxes(app, canvas):
     for tile in app.stage.getTiles():
         x0, y0, x1, y1 = tile.boundingBox
         canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")

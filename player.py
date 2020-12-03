@@ -21,6 +21,7 @@ class Player(object):
         self.doubleJumpPrimed = False
         self.facing = 1
         self.projectiles = []
+        self.death = False
 
     def shoot(self):
         if (len(self.projectiles) < 5):
@@ -55,9 +56,13 @@ class Player(object):
         for tile in stage.getTiles():
             if (tile.inProximity(self.x + 25, self.y + 25)):
                 tiles += [tile]
-        platform = self.groundCheck(stage, tiles)
+        entities = []
+        for entity in stage.entities:
+            if (entity.inProximity(self.x + 25, self.y + 25)):
+                entities += [entity]
+        self.groundCheck(stage, tiles)
         # print(self.x, self.y)
-        self.moveWithCollision(stage, self.vx, self.vy, tiles, platform)
+        self.moveWithCollision(stage, self.vx, self.vy, tiles, entities)
         self.updateBoundingBoxes(self.x, self.y)
         if (self.platform != None):
             if (not self.platform.onPlatform(self.boundingBoxes)):
@@ -73,7 +78,7 @@ class Player(object):
             self.y = self.platform.y - 42
             self.x += self.platform.vx
         for tile in tiles:
-            if (tile.boxesIntersect(box, tile.boundingBox)):
+            if (boxesIntersect(box, tile.boundingBox)):
                 touching = True
                     # self.updateGround(ground, platform)
                     # return (vx, vy)
@@ -81,7 +86,7 @@ class Player(object):
         
 
 
-    def moveWithCollision(self, stage, vx, vy, tiles, platform, depth = 0):
+    def moveWithCollision(self, stage, vx, vy, tiles, entities, depth = 0):
         # print("Start", vx)
         if (vx == 0 and vy == 0):
             return (0, 0)
@@ -96,7 +101,7 @@ class Player(object):
             currentVX += xStep
             currentVY += yStep
             collisions = self.checkCollisions(stage, currentVX, 
-                                        currentVY, tiles, depth)
+                                        currentVY, tiles, entities)
             for key in collisions:
                 if (collisions[key]):
                     currentVX -= xStep
@@ -106,7 +111,8 @@ class Player(object):
                         self.vx = 0
                         self.x += currentVX
                         if (depth < 1):
-                            self.moveWithCollision(stage, 0, vy, tiles, 1)
+                            self.moveWithCollision(stage, 0, vy, tiles, 
+                                entities, 1)
                         else:
                             self.y += currentVY
                         return
@@ -114,7 +120,8 @@ class Player(object):
                         self.vy = 0
                         self.y += currentVY
                         if (depth < 1):
-                            self.moveWithCollision(stage, vx, 0, tiles, 1)
+                            self.moveWithCollision(stage, vx, 0, tiles,
+                                entities, 1)
                         else:
                             self.x += currentVX
                         return 
@@ -123,30 +130,33 @@ class Player(object):
         self.x += vx
         self.y += vy
 
-    def checkCollisions(self, stage, vx, vy, tiles, depth):
+    def checkCollisions(self, stage, vx, vy, tiles, entities):
         # print("Collisions being checked")
         # print(tiles)
         collisions = {"top": False, "left": False, "right": False, "bot": False,
          "platform": False}
         self.updateBoundingBoxes(self.x + vx, self.y + vy)
         boundingBox = self.boundingBoxes
+        for entity in entities:
+            if (entity.isTouching(boundingBox)):
+                self.death = True
         for tile in tiles:
             if (vy >= 0):
-                if (tile.boxesIntersect(tile.boundingBox, 
+                if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["bot"])):
                     collisions["bot"] = True
                     if (isinstance(tile, MovingPlatform)):
                         self.platform = tile
             if (vy <= 0):
-                if (tile.boxesIntersect(tile.boundingBox, 
+                if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["top"])):
                     collisions["top"] = True
             if (vx <= 0):
-                if (tile.boxesIntersect(tile.boundingBox, 
+                if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["left"])):
                     collisions["left"] = True
             elif (vx >= 0):
-                if (tile.boxesIntersect(tile.boundingBox, 
+                if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["right"])):
                     collisions["right"] = True
         self.updateGround(collisions["bot"])
@@ -224,7 +234,7 @@ class PlayerProjectile(object):
             if (tile.inProximity(x, self.y, 40)):
                 tiles += [tile]
         for tile in tiles:
-            if (tile.boxesIntersect(self.boundingBox, tile.boundingBox)):
+            if (boxesIntersect(self.boundingBox, tile.boundingBox)):
                 projectiles.remove(self)
                 if (isinstance(tile, Save)):
                     return "save"

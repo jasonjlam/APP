@@ -6,6 +6,7 @@
 
 import random
 from tiles import *
+from entities import *
 
 class Stage(object):
     def __init__(self, width, height, file):
@@ -16,7 +17,9 @@ class Stage(object):
         self.colTiles = width // self.tileSize
         self.generateTilesFromCSV(file)
         self.movingTiles = []
-        self.generateAdditionalTiles()
+        self.entities = []
+        self.generateMovingTiles()
+        self.generateEntities()
         # print(self.rowTiles, self.colTiles)
         # print (self.tiles)
 
@@ -46,7 +49,10 @@ class Stage(object):
             y = self.height - self.tileSize
             self.tiles.add(Square(x, y, self.tileSize))
 
-    def generateAdditionalTiles(self):
+    def generateMovingTiles(self):
+        pass
+
+    def generateEntities(self):
         pass
 
     def getTiles(self):
@@ -74,10 +80,14 @@ class Stage1(Stage):
         self.entrance = "left"
         self.exit = "right"
 
-    def generateAdditionalTiles(self):
+    def generateMovingTiles(self):
         platform1 = MovingPlatform(18 * 40, 6 * 40, 18 * 40, 15 * 40, 120, 
                                     0, 4)
         self.movingTiles.append(platform1)
+
+    def generateEntities(self):
+        spike1 = UpwardSpike(16 * 40, 14 * 40, 40)
+        self.entities.append(spike1)
 
 class Stage2(Stage):
     def __init__(self, width, height):
@@ -85,7 +95,7 @@ class Stage2(Stage):
         self.entrance = "left"
         self.exit = "right"
     
-    def generateAdditionalTiles(self):
+    def generateMovingTiles(self):
         save1 = Save(200, 650, 20, 2)
         self.tiles.append(save1)
 
@@ -95,7 +105,7 @@ class Stage3(Stage):
         self.entrance = "left"
         self.exit = "top"
 
-    def generateAdditionalTiles(self):
+    def generateMovingTiles(self):
         platform1 = MovingPlatform(1 * 40, 11 * 40, 11 * 40, 11 * 40, 80, 
                                 4, 0)
         self.movingTiles.append(platform1)
@@ -111,7 +121,6 @@ class Stage5(Stage):
         super().__init__(width, height, "stages/5.csv")
         self.entrance = "bot"
         self.exit = "top"
-# print (readCSV("stages/1.csv"))
 
 
 

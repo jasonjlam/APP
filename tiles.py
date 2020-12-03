@@ -1,5 +1,20 @@
 # Holds all of the tiles for each stage, and their many different types
 
+from cmu_112_graphics import *
+
+def boxesIntersect(box1, box2, debug = False):
+    if (debug):
+        print(box1, box2)
+    x0, y0, x1, y1 = box1
+    x2, y2, x3, y3 = box2
+    offset = 0.1
+    return not (x2 - offset >= x1 or x0 - offset >= x3 
+            or y2 - offset >= y1 or y0 - offset >= y3)
+
+def isPointIn(box, x, y):
+    x0, y0, x1, y1 = box
+    return (x > x0 and x < x1 and y > y0 and y < y1)
+
 class Tile(object):
     def __init__(self, x, y, size):
         self.x = x
@@ -7,7 +22,7 @@ class Tile(object):
         self.size = size
 
     def __repr__(self):
-        return f"Tile at ({self.x}, {self.y})"
+        return f"{type(self)} at ({self.x}, {self.y})"
 
     def centerOfTile(self):
         return (self.x, self.y)
@@ -16,15 +31,6 @@ class Tile(object):
         d = self.size + extra
         cx, cy = self.centerOfTile()
         return abs(cx - x) < d and abs(cy - y) < d
-
-    def boxesIntersect(self, box1, box2, debug = False):
-        if (debug):
-            print(box1, box2)
-        x0, y0, x1, y1 = box1
-        x2, y2, x3, y3 = box2
-        offset = 0.1
-        return not (x2 - offset >= x1 or x0 - offset >= x3 
-                or y2 - offset >= y1 or y0 - offset >= y3)
 
 class Square(Tile):
     def __init__(self, x, y, size):
