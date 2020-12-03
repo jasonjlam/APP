@@ -7,7 +7,7 @@ import time
 def appStarted(app, x = 100, y = 700, stage = 1):
     app.player = Player(x, y)
     app.keysPressed = {"a": False, "d": False, "w": False, "s": False, 
-                       "Space": False, "f": False, "Enter": True, "b": False}
+                       "Space": False, "Enter": True}
     app.saveStage = stage
     app.saveX = x
     app.saveY = y
@@ -28,6 +28,9 @@ def keyPressed(app, event):
             app.player.shoot()
         if (event.key == "Space"):
             app.player.isJumping = True
+    elif (event.key == "b"):
+        print(app.showBoundingBoxes)
+        app.showBoundingBoxes = not app.showBoundingBoxes
     elif (event.key == "p"):
         app.paused = not app.paused
     elif (event.key == "x"):
@@ -51,20 +54,19 @@ def doStep(app):
     app.start = time.time()
     # print (app.keysPressed)
     if (app.keysPressed["a"]):
-        app.player.setvx(-10)
+        app.player.vx = -10
         app.player.facing = -1
     elif (app.keysPressed["d"]):
-        app.player.setvx(10)
+        app.player.vx = 10
         app.player.facing = 1
     else:
-        app.player.setvx(0)
+        app.player.vx = 0
 
     if (app.player.isJumping):
         app.player.jump(app)
-    border = app.player.move(app.stage)
     for tile in app.stage.movingTiles:
         tile.move()
-        print(tile.boundingBox)
+    border = app.player.move(app.stage)
     for projectile in app.player.projectiles:
         if (projectile.move(app) == "save"):
             recordSave(app)
@@ -77,12 +79,8 @@ def recordSave(app):
     app.saveStage = app.currentStage
 
 def changeStage(app, border):
-    print(border)
     app.currentStage += border
-    print(app.currentStage)
     app.stage = createStage(app.currentStage, app.width, app.height)
-    print(app.stage)
-
 
 def calculateFPS(app):
     millisecond = 1000
@@ -104,7 +102,7 @@ def redrawAll(app, canvas):
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
                         text = int(calculateFPS(app)))
     canvas.create_text(30, 500, font = "Arial 15 bold", 
-                        text = app.player.onPlatform)
+                        text = str(app.player.platform))
 
 def renderCharacter(app, canvas):
     for projectile in app.player.projectiles:

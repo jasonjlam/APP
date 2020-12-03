@@ -4,8 +4,6 @@ class Tile(object):
     def __init__(self, x, y, size):
         self.x = x
         self.y = y
-        self.lastx = 0
-        self.lasty = 0
         self.size = size
 
     def __repr__(self):
@@ -64,15 +62,14 @@ class MovingPlatform(Tile):
             self.vx = -self.vx
         if ((self.y == self.y1 or self.y == self.y0) and self.vy != 0 ):
             self.vy = -self.vy
-        print (self.boundingBox)
         self.boundingBox = (self.x, self.y, self.x + self.size, 
                             self.y + self.thickness)
 
-    def getLastVX(self):
-        return self.x - self.lastx
-
-    def getLastVY(self):
-        return self.y - self.lasty
+    def onPlatform(self, boundingBoxes):
+        x0, y0, x1, y1 = boundingBoxes["left"]
+        x2, y2, x3, y3 = boundingBoxes["right"]
+        x4, y4, x5, y6 = self.boundingBox
+        return (x3 > x4 and x0 < x5)
 
 class Save(Square):
     def __init__(self, x, y, size, stage):

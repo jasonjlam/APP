@@ -14,10 +14,8 @@ class Player(object):
         self.h = 44
         self.jumpVelocity = -24
         self.onGround = True
-        self.onPlatform = False
+        self.platform = None
         self.isJumping = False
-        self.platformVX = 0
-        self.platformVY = 0
         self.jumps = 2
         self.updateBoundingBoxes(0,0)
         self.doubleJumpPrimed = False
@@ -36,20 +34,20 @@ class Player(object):
             (self.jumps > 0  and self.vy > -3 and self.doubleJumpPrimed)):
             app.audio.jumpAudio()
             self.vy = self.jumpVelocity
-            self.onPlatform = False
+            self.platform = None
             self.onGround = False
             self.jumps -= 1
 
-
-    def setvx(self, vx):
-        self.vx = vx
+    def moveJump(self):
+        if (self.vy < -9 and not self.isJumping):
+            self.vy = -9
+            self.onGround = False
+        if (not self.onGround and self.platform == None):
+            self.vy += 3
+        if (self.vy > 25):
+            self.vy = 25
 
     def move(self, stage):
-        start = time.time()
-        # print (self.vx, self.vy)
-        # print(self.onGround)
-        # print(self.doubleJump)
-        # print (self.onPlatform)
         if (self.vy < 0):
             self.onGround = False
         self.moveJump()
@@ -58,32 +56,28 @@ class Player(object):
             if (tile.inProximity(self.x + 25, self.y + 25)):
                 tiles += [tile]
         platform = self.groundCheck(stage, tiles)
-        print(self.x, self.y)
+        # print(self.x, self.y)
         self.moveWithCollision(stage, self.vx, self.vy, tiles, platform)
-        print(self.x, self.y)
         self.updateBoundingBoxes(self.x, self.y)
-        # print (time.time() - start)
+        if (self.platform != None):
+            if (not self.platform.onPlatform(self.boundingBoxes)):
+                self.platform = None
         return self.checkBorders(stage)
     
     def groundCheck(self, stage, tiles):
-        print(self.onPlatform)
         ground = False
         platform = False
         x0, y0, x1, y1 = self.boundingBoxes["bot"]
-        box = (x0, y0, x1, y1 + 1)
+        box = (x0, y0, x1, y1)
+        if (self.platform != None):
+            self.y = self.platform.y - 42
+            self.x += self.platform.vx
         for tile in tiles:
-            if (tile.boxesIntersect(box, tile.boundingBox, "true")):
+            if (tile.boxesIntersect(box, tile.boundingBox)):
                 touching = True
-                if (isinstance(tile, MovingPlatform)):
-                    print("AHHH")
-                    platform = True
-                    self.x += tile.getLastVX()
-                    if (tile.getLastVY() < 0):
-                        self.y += tile.getLastVY()
                     # self.updateGround(ground, platform)
                     # return (vx, vy)
-        print(ground, platform)
-        self.updateGround(ground, platform)
+        self.updateGround(ground)
         
 
 
@@ -110,25 +104,18 @@ class Player(object):
                     if ((collisions["left"] or collisions["right"]) 
                                             and vx != 0):
                         self.vx = 0
-                        # if (collisions["vx"] != 0):
-                        #     currentVX += collisions["vx"]
-                        #     self.vx = collisions["vx"]
-                        print("currentVX", currentVX)
                         self.x += currentVX
                         if (depth < 1):
                             self.moveWithCollision(stage, 0, vy, tiles, 1)
                         else:
-                            print("Case 1")
                             self.y += currentVY
                         return
                     if ((collisions["top"] or collisions["bot"]) and vy != 0):
                         self.vy = 0
-                        print("currentVY", currentVY)
                         self.y += currentVY
                         if (depth < 1):
                             self.moveWithCollision(stage, vx, 0, tiles, 1)
                         else:
-                            print("Case 2")
                             self.x += currentVX
                         return 
         self.vx = vx
@@ -140,7 +127,7 @@ class Player(object):
         # print("Collisions being checked")
         # print(tiles)
         collisions = {"top": False, "left": False, "right": False, "bot": False,
-         "platform": False, "vx": 0, "vy": 0}
+         "platform": False}
         self.updateBoundingBoxes(self.x + vx, self.y + vy)
         boundingBox = self.boundingBoxes
         for tile in tiles:
@@ -149,10 +136,7 @@ class Player(object):
                                         boundingBox["bot"])):
                     collisions["bot"] = True
                     if (isinstance(tile, MovingPlatform)):
-                        collisions["platform"] = True
-                        collisions["vx"] = tile.getLastVX()
-                        collisions["vy"] = tile.getLastVY()
-                    print("bot")
+                        self.platform = tile
             if (vy <= 0):
                 if (tile.boxesIntersect(tile.boundingBox, 
                                         boundingBox["top"])):
@@ -164,22 +148,18 @@ class Player(object):
             elif (vx >= 0):
                 if (tile.boxesIntersect(tile.boundingBox, 
                                         boundingBox["right"])):
-                    print("Right intersection")
                     collisions["right"] = True
-        self.updateGround(collisions["bot"], collisions["platform"])
+        self.updateGround(collisions["bot"])
         return collisions
 
-    def updateGround(self, isTouching, isPlatform):
+    def updateGround(self, isTouching):
         if (isTouching):
-            if (isPlatform):
-                self.onPlatform = True
-            else:
+            if (self.platform == None):
                 self.onGround = True
             self.jumps = 2
             self.doubleJumpPrimed = False
         else:
             self.onGround = False
-            self.onPlatform = False
 
     def updateBoundingBoxes(self, x, y):
         x = round(x)
@@ -188,15 +168,6 @@ class Player(object):
         "left": (0 + x, 2 + y, 24 + x, 40 + y), 
         "right": (25 + x, 2 + y, 47 + x, 40 + y),
         "bot": (1 + x, 20 + y, 46 + x, 42 + y)}
-
-    def moveJump(self):
-        if (self.vy < -9 and not self.isJumping):
-            self.vy = -9
-            self.onGround = False
-        if (not self.onGround and not self.onPlatform):
-            self.vy += 3
-        if (self.vy > 25):
-            self.vy = 25
 
     def checkBorders(self, stage):
         border = None
@@ -213,7 +184,6 @@ class Player(object):
         elif (self.y > stage.height + 25):
             border = "bot"
             self.y = -23
-        # print(border, stage.entrance, stage.exit)
         if (border == stage.exit):
             self.projectiles = []
             return 1
