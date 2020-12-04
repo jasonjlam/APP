@@ -9,25 +9,37 @@ import time
 def appStarted(app, x = 100, y = 700, stage = 1):
     app.player = Player(x, y)
     app.keysPressed = {"a": False, "d": False, "w": False, "s": False, 
-                       "Space": False, "Enter": True}
+                       "Space": False, "Enter": False}
     app.saveStage = stage
     app.saveX = x
     app.saveY = y
     app.timerDelay = 20
     app.FPS = 0
     app.start = 0
-    app.kirbySprite = ImageTk.PhotoImage(app.loadImage("kirby.png"))
+    initializeSprites(app)
     app.currentStage = stage
     app.stage = createStage(stage, app.width, app.height)
     app.paused = False
     app.showBoundingBoxes = False
     app.audio = Audio()
 
+def initializeSprites(app):
+    app.sprites = {}
+    app.sprites["rightKirby"] = ImageTk.PhotoImage(app.loadImage("kirby.png"))
+    leftKirby = app.loadImage("kirby.png")
+    leftKirby = leftKirby.transpose(Image.FLIP_LEFT_RIGHT)
+    app.sprites["leftKirby"] = ImageTk.PhotoImage(leftKirby)
+    app.sprites["haunter"] = []
+    for i in range(25):
+        haunter = app.loadImage(fr"assets/haunter/{i + 1}.gif")
+        haunter = app.scaleImage(haunter, 6)
+        app.sprites["haunter"].append(ImageTk.PhotoImage(haunter))
+
 def keyPressed(app, event):
+    if (event.key == "Enter" and not app.keysPressed["Enter"]):
+            app.player.shoot()
     if ((event.key) in app.keysPressed):
         app.keysPressed[event.key] = True
-        if (event.key == "Enter"):
-            app.player.shoot()
         if (event.key == "Space"):
             app.player.isJumping = True
     elif (event.key == "b"):
@@ -63,17 +75,24 @@ def doStep(app):
         app.player.facing = 1
     else:
         app.player.vx = 0
-
     if (app.player.isJumping):
         app.player.jump(app)
-    for tile in app.stage.movingTiles:
-        tile.move()
-    border = app.player.move(app.stage)
+    border = moveObjects(app)
     for projectile in app.player.projectiles:
         if (projectile.move(app) == "save"):
             recordSave(app)
     if (border != 0):
         changeStage(app, border)
+
+def moveObjects(app):
+    for tile in app.stage.movingTiles:
+        tile.move()
+    for entity in app.stage.entities:
+        if (entity.moving):
+            entity.move(app)
+    if (app.stage.boss != None):
+        app.stage.boss.move(app)
+    return app.player.move(app.stage)
 
 def recordSave(app):
     app.saveX = app.player.x
@@ -98,6 +117,7 @@ def redrawAll(app, canvas):
     drawCharacter(app, canvas)
     drawTiles(app, canvas)
     drawEntities(app, canvas)
+    drawBoss(app, canvas)
     if (app.showBoundingBoxes):
         drawBoundingBoxes(app, canvas)
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
@@ -105,14 +125,20 @@ def redrawAll(app, canvas):
     canvas.create_text(30, 500, font = "Arial 15 bold", 
                         text = str(app.player.platform))
 
+def drawBoss(app, canvas):
+    if (app.stage.boss == None):
+        return
+    else:
+        app.stage.boss.draw(app, canvas)
+
 def drawTiles(app, canvas):
     for tile in app.stage.getTiles():
         x0, y0, x1, y1 = tile.boundingBox
         canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
-        
+
 def drawEntities(app, canvas):
     for entity in app.stage.entities:
-        entity.draw(canvas)
+        entity.draw(app, canvas)
 
 def drawCharacter(app, canvas):
     for projectile in app.player.projectiles:
@@ -122,9 +148,13 @@ def drawCharacter(app, canvas):
         canvas.create_oval(x - r, y - r, x + r, y + r, fill = "yellow")
     if (app.player.death):
         canvas.create_text(app.player.x, app.player.y, fill = "red", text = "DED")
-    else:    
-        canvas.create_image(app.player.x, app.player.y, 
-                        image = app.kirbySprite, anchor = "nw")
+    else:
+        if (app.player.facing == -1):
+            canvas.create_image(app.player.x, app.player.y, 
+                        image = app.sprites["leftKirby"], anchor = "nw")
+        else:
+            canvas.create_image(app.player.x, app.player.y, 
+                        image = app.sprites["rightKirby"], anchor = "nw")
 
 def drawBoundingBoxes(app, canvas):
     for tile in app.stage.getTiles():

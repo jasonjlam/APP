@@ -7,6 +7,7 @@
 import random
 from tiles import *
 from entities import *
+from bosses import *
 
 class Stage(object):
     def __init__(self, width, height, file):
@@ -20,6 +21,7 @@ class Stage(object):
         self.entities = []
         self.generateMovingTiles()
         self.generateEntities()
+        self.boss = None
         # print(self.rowTiles, self.colTiles)
         # print (self.tiles)
 
@@ -58,6 +60,12 @@ class Stage(object):
     def getTiles(self):
         return self.tiles + self.movingTiles
 
+    def getEntities(self):
+        if (self.boss != None):
+            return [self.boss] + self.entities
+        else:
+            return self.entities
+
 def createStage(stage, width, height):
     w = width
     h = height
@@ -92,12 +100,9 @@ class Stage1(Stage):
 class Stage2(Stage):
     def __init__(self, width, height):
         super().__init__(width, height, "stages/2.csv")
-        self.entrance = "left"
+        self.entrance = "blocked"
         self.exit = "right"
-    
-    def generateMovingTiles(self):
-        save1 = Save(200, 650, 20, 2)
-        self.tiles.append(save1)
+        self.boss = Haunter(16 * 40, 3 * 40)
 
 class Stage3(Stage):
     def __init__(self, width, height):

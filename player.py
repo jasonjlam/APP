@@ -12,7 +12,7 @@ class Player(object):
         self.vy = 0
         self.w = 48
         self.h = 44
-        self.jumpVelocity = -24
+        self.jumpVelocity = -26
         self.onGround = True
         self.platform = None
         self.isJumping = False
@@ -57,7 +57,7 @@ class Player(object):
             if (tile.inProximity(self.x + 25, self.y + 25)):
                 tiles += [tile]
         entities = []
-        for entity in stage.entities:
+        for entity in stage.getEntities():
             if (entity.inProximity(self.x + 25, self.y + 25)):
                 entities += [entity]
         self.groundCheck(stage, tiles)
@@ -177,23 +177,36 @@ class Player(object):
         self.boundingBoxes = {"top": (1 + x, 0 + y, 46 + x, 1 + y), 
         "left": (0 + x, 2 + y, 24 + x, 40 + y), 
         "right": (25 + x, 2 + y, 47 + x, 40 + y),
-        "bot": (1 + x, 20 + y, 46 + x, 42 + y)}
+        "bot": (1 + x, 20 + y, 46 + x, 41 + y)}
 
     def checkBorders(self, stage):
         border = None
+        borders = [stage.exit, stage.entrance]
         if (self.x < -25):
             border = "left"
-            self.x = stage.width - 23
+            if (border in borders):
+                self.x = stage.width - 23
+            else:
+                self.x = -25
         elif (self.x > stage.width - 25):
             border = "right"
-            self.x = -23
+            if (border in borders):
+                self.x = -23
+            else:
+                self.x = stage.width - 25
         elif (self.y < -25):
             border = "top"
-            self.y = stage.height - 23
-            self.vy += -10
-        elif (self.y > stage.height + 25):
+            if (border in borders):
+                self.y = stage.height - 23
+                self.vy += -10
+            else:
+                self.y = -25
+        elif (self.y > stage.height - 25):
             border = "bot"
-            self.y = -23
+            if (border in borders):
+                self.y = -23
+            else:
+                self.y = stage.height - 25
         if (border == stage.exit):
             self.projectiles = []
             return 1
@@ -209,33 +222,35 @@ class PlayerProjectile(object):
         self.y = y
         self.r = 10
         self.vx = vx
-        r = self.r * 3 / 4
-        self.boundingBox = (x - r, y - r, x + r, y - r)
-
+        self.displayed = True
     def __hash__(self):
-        return hash(self.x, self.y, self.vy)
+        return hash(self.x, self.y, self.vx)
 
     def __repr__(self):
         return f"Projectile at ({self.x}, {self.y}), velocity = {self.vx}"
 
     def move(self, app):
+        if (not self.displayed):
+            app.player.projectiles.remove(self)
         projectiles = app.player.projectiles
         stage = app.stage
         self.x += self.vx
-        x = self.x
-        y = self.y
-        r = 3 * self.r / 4
-        self.boundingBox = (x - r, y - r, x + r, y + r)
         if (self.x < 0 or self.x > stage.width):
-            projectiles.remove(self)
+            self.displayed = False
             return
         tiles = []
+        for entity in stage.getEntities():
+            if (entity.inProximity(self.x, self.y, 40)):
+                if (entity.hp > 0 and entity.isProjectileTouching(
+                    self.x, self.y, self.r)):
+                    entity.hp -= 1
+                    self.displayed = False
         for tile in stage.tiles:
-            if (tile.inProximity(x, self.y, 40)):
-                tiles += [tile]
-        for tile in tiles:
-            if (boxesIntersect(self.boundingBox, tile.boundingBox)):
-                projectiles.remove(self)
-                if (isinstance(tile, Save)):
-                    return "save"
-                return
+            if (tile.inProximity(self.x, self.y, 40)):
+                if (boxIntersectsCircle(tile.boundingBox, self.x, self.y,
+                    self.r)):
+                    self.displayed = False
+                    if (isinstance(tile, Save)):
+                        return "save"
+                    return
+        

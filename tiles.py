@@ -15,6 +15,19 @@ def isPointIn(box, x, y):
     x0, y0, x1, y1 = box
     return (x > x0 and x < x1 and y > y0 and y < y1)
 
+def boxIntersectsCircle(box, x, y, r):
+    x0, y0, x1, y1 = box
+    w = x1 - x0
+    h = y1 - y0
+    xDistance = abs((x0 + x1) / 2 - x)
+    yDistance = abs((y0 + y1) / 2 - y)
+
+    if (xDistance > w / 2 + r or yDistance > h / 2 + r):
+        return False
+    elif (xDistance <= w / 2 or yDistance <= h / 2):
+        return True
+    return ((xDistance - w / 2)**2 + (yDistance - h / 2) **2 <= r ** 2)
+
 class Tile(object):
     def __init__(self, x, y, size):
         self.x = x
