@@ -1,4 +1,5 @@
 from entities import *
+from random import *
 
 class Boss(Entity):
     def __init__(self, x, y, size, hp):
@@ -15,6 +16,8 @@ class Haunter(Boss):
     def __init__(self, x, y):
         super().__init__(x, y, 480, 150)
         self.scale = 6
+        self.vx = 0
+        self.vy = 0
         self.w = 85 * self.scale
         self.h = 70 * self.scale
         self.frameCount = 0
@@ -22,9 +25,9 @@ class Haunter(Boss):
         self.moveTimer = 0
         self.text = "A wild Haunter appeared!"
         self.updateBoundingBox()
+        self.currentMove = ""
 
     def draw(self, app, canvas):
-        print(self.hp)
         self.drawHP(app, canvas)
         # print(int(self.frameCount))
         canvas.create_image(self.x, self.y, anchor = "nw", 
@@ -37,17 +40,27 @@ class Haunter(Boss):
     def move(self, app):
         if (self.hp < 1):
             app.stage.boss = None
+            self.text = "The wild Haunter fainted!"
         self.updateBoundingBox()
-        x0, y0, x1, y1 = self.boundingBox
+        self.x += self.vx
+        self.y += self.vy
+        print(self.x, self.y)
+        if (self.currentMove == "hex"):
+            print("WTFF")
+            self.hex(app)
+        elif (self.currentMove == "shadowBall"):
+            self.shadowBall(app)
+        elif (self.currentMove == "lick"):
+            self.lick(app)
+        elif (self.currentMove == "returnToCenter"):
+            self.returnToCenter(app)
+        elif (self.moveTimer == 100):
+            self.moveTimer = 0
+            self.currentMove = "hex"
         self.frameCount += 0.5
         self.frameCount %= 25
         self.moveTimer += 1
         print(self.moveTimer)
-        if (self.moveTimer == 120):
-            self.moveTimer = 0
-            app.stage.entities += [HelixBall(x0, y0, 50, -6, 20, 60)]
-            app.stage.entities += [HelixBall(x0, y0, 50, -6, -20, 60)]
-        pass
 
     def updateBoundingBox(self):
         if (self.frameCount < 14):
@@ -72,3 +85,66 @@ class Haunter(Boss):
     def isProjectileTouching(self, x, y, r):
         return boxIntersectsCircle(self.boundingBox, x, y, r)
 
+    def hex(self, app):
+        self.text = "The wild Haunter used Hex!"
+        x0, y0, x1, y1 = self.boundingBox
+        if (self.moveTimer == 50):
+            self.moveTimer = 0
+            self.currentMove = "returnToCenter"
+        elif (self.moveTimer == 1):
+            app.stage.entities += [HelixBall(x0, y1, 50, -6, 20, 60)]
+            app.stage.entities += [HelixBall(x0, y1, 50, -6, -20, 60)]
+        elif (self.moveTimer > 20):
+            self.vx = 20
+
+
+    def shadowBall(self, app):
+        self.text = "The wild Haunter used Shadow Ball!"
+        x0, y0, x1, y1 = self.boundingBox
+        if(self.moveTimer == 215):
+            self.moveTimer = 0
+            self.currentMove = "returnToCenter"
+        elif (self.moveTimer >= 180):
+            self.vy = 15
+        elif (self.moveTimer == 1):
+            self.vx = 20
+        elif (self.moveTimer == 15):
+            self.vx = 0
+            self.x = 20 * 40
+            self.y = -500
+            self.vy = 7
+        elif (self.moveTimer % 25 == 22):
+            self.vy = 0.5
+        elif (self.moveTimer % 25 == 3):
+            self.vy = 7
+        elif (self.moveTimer > 20 and 
+            (self.moveTimer % 25 == 21 or self.moveTimer % 25 == 4)):
+            app.stage.entities += [Ball(x0, y1, 50, -20, 0)]
+
+    def returnToCenter(self, app):
+        if (self.moveTimer == 1):
+            self.x = 30 * 40
+            self.vy = 0
+            self.vx = -16
+            self.y = randint(0, 400)
+        elif (self.moveTimer > 26):
+            self.x = 20 * 40
+            self.vx = 0
+            self.moveTimer = 0
+            self.currentMove = ""
+
+    def lick(self, app):
+        self.text = "The wild Gastly used Lick!"
+        if (self.moveTimer == 100):
+            self.moveTimer = 0
+            self.currentMove = "returnToCenter"
+        elif (self.moveTimer == 30):
+            vectorX = app.player.x - self.x
+            vectorY = app.player.y - self.y - 200
+            self.vx = vectorX / 30
+            self.vy = vectorY / 30
+        elif (self.moveTimer < 30):
+            self.vx = 3
+        elif (self.moveTimer < 15):
+            self.vx = 0
+        

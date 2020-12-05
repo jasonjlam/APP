@@ -10,7 +10,7 @@ class Entity(Tile):
         self.hp = -100
         self.moving = False
 
-    def move(self, app, yOffset):
+    def move(self, app, yOffset = 300):
         entities = app.stage.entities
         self.x += self.vx
         self.y += self.vy
@@ -110,3 +110,5 @@ class HelixBall(Ball):
             self.theta = 0
         self.vy = self.maxVY * cos(self.theta * 2 * pi / self.period)
         super().move(app, 500)
+
+        

@@ -102,7 +102,7 @@ class Stage2(Stage):
         super().__init__(width, height, "stages/2.csv")
         self.entrance = "blocked"
         self.exit = "right"
-        self.boss = Haunter(16 * 40, 3 * 40)
+        self.boss = Haunter(20 * 40, 3 * 40)
 
 class Stage3(Stage):
     def __init__(self, width, height):
