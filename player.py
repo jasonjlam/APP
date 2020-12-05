@@ -253,4 +253,8 @@ class PlayerProjectile(object):
                     if (isinstance(tile, Save)):
                         return "save"
                     return
+
+    def drawBoundingBox(self, canvas):
+        canvas.create_oval(self.x - self.r, self.y - self.r,
+        self.x + self.r, self.y + self.r, outline = "green")
         

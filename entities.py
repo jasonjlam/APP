@@ -3,6 +3,7 @@
 
 from tiles import *
 from math import *
+from random import *
 
 class Entity(Tile):
     def __init__(self, x, y, size):
@@ -21,11 +22,16 @@ class Entity(Tile):
             self.y > app.stage.height + yOffset):
             entities.remove(self)
             return
-        if self.isTouching(app.player.boundingBoxes):
-            print("touching")
+        if (self.isTouching(app.player.boundingBoxes)):
             self.color = "red"
-        else:
+        elif (self.color == "red"):
             self.color = "purple"
+            
+    def drawBoundingBox(self):
+        pass
+
+    def draw(self):
+        pass
 
 class UpwardSpike(Entity):
     def __init__(self, x, y, size):
@@ -59,12 +65,14 @@ class UpwardSpike(Entity):
         x = self.x
         y = self.y
         size = self.size
-        for box in self.boundingBoxes:
-            x0, y0, x1, y1 = box
-            canvas.create_rectangle(x0, y0, x1, y1)
         canvas.create_line(x + size / 2, y, x, y + size)
         canvas.create_line(x + size / 2, y, x + size, y + size)
         canvas.create_line(x, y + size, x + size, y + size)
+
+    def drawBoundingBox(self, canvas):
+        for box in self.boundingBoxes:
+            x0, y0, x1, y1 = box
+            canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
 
 class Ball(Entity):
     def __init__(self, x, y, size, vx, vy):
@@ -95,6 +103,13 @@ class Ball(Entity):
     def draw(self, app, canvas):
         canvas.create_oval(self.x - self.r, self.y - self.r, self.x + self.r,
             self.y + self.r, fill = self.color)
+    
+    def isProjectileTouching(self, x, y, r):
+        return (((self.x - x) ** 2 + (self.y - y) ** 2) <= (r + self.r) ** 2)
+
+    def drawBoundingBox(self, canvas):
+        canvas.create_oval(self.x - self.r, self.y - self.r, self.x + self.r,
+            self.y + self.r, outline = "green")
 
 class HelixBall(Ball):
     def __init__(self, x, y, size, vx, vy, period):
@@ -103,7 +118,6 @@ class HelixBall(Ball):
         self.theta = 0
         self.period = 60
 
-
     def move(self, app):
         self.theta += 1
         if (self.theta >= self.period):
@@ -111,4 +125,58 @@ class HelixBall(Ball):
         self.vy = self.maxVY * cos(self.theta * 2 * pi / self.period)
         super().move(app, 500)
 
-        
+class Gastly(Ball):
+    def __init__(self, x, y, app):
+        super().__init__(x, y, 26, 0, 0)
+        self.hp = 1
+        self.initialMove(app)
+        self.display = True
+        self.homing = False
+        self.timer = 0
+
+    def initialMove(self, app):
+        vectorX = app.player.x - self.x - randint(-100, 100)
+        vectorY = app.player.y - self.y - randint(-100, 100) 
+        vectorLength = int((vectorX **2 + vectorY **2)** 0.5)
+        self.vx = vectorX / vectorLength * 10
+        self.vy = vectorY / vectorLength * 10
+
+    def move(self, app):
+        if (not self.display):
+            app.stage.entities.remove(self)
+        elif (self.hp == 0 or self.timer > 1000):
+            self.display = False
+        vectorX = app.player.x - self.x 
+        vectorY = app.player.y - self.y
+        print(self.vx, self.vy)
+        distance = vectorX ** 2 + vectorY ** 2
+        if (self.homing and distance > 20000):
+            print("adjusting")
+            if (self.vx < -6):
+                self.vx += 1
+            elif (self.vx > 6):
+                self.vx -= 1
+            elif (vectorX - self.vx > 0):
+                self.vx += 1
+            else:
+                self.vx -= 1
+            if (self.vy < -6):
+                self.vy += 1
+            elif (self.vy > 6):
+                self.vy -= 1
+            elif (vectorY - self.vy > 0):
+                self.vy += 1
+            else:
+                self.vy -= 1
+        elif (distance < 40000):
+            self.homing = True
+            self.color = "blue"
+
+        self.timer += 1
+        super().move(app, 500)
+
+    def draw(self, app, canvas):
+        x = self.x - 58
+        y = self.y - 56
+        canvas.create_image(x, y, anchor = "nw", image = app.sprites["gastly"])
+

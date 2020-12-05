@@ -25,15 +25,17 @@ def appStarted(app, x = 100, y = 700, stage = 1):
 
 def initializeSprites(app):
     app.sprites = {}
-    app.sprites["rightKirby"] = ImageTk.PhotoImage(app.loadImage("kirby.png"))
-    leftKirby = app.loadImage("kirby.png")
+    leftKirby = app.loadImage("assets/kirby/kirby.png")
+    app.sprites["rightKirby"] = ImageTk.PhotoImage(leftKirby)
     leftKirby = leftKirby.transpose(Image.FLIP_LEFT_RIGHT)
     app.sprites["leftKirby"] = ImageTk.PhotoImage(leftKirby)
     app.sprites["haunter"] = []
     for i in range(25):
-        haunter = app.loadImage(fr"assets/haunter/{i + 1}.gif")
+        haunter = app.loadImage(fr"assets/entities/haunter/{i + 1}.gif")
         haunter = app.scaleImage(haunter, 6)
         app.sprites["haunter"].append(ImageTk.PhotoImage(haunter))
+    app.sprites["gastly"] = ImageTk.PhotoImage(app.loadImage(
+            "assets/entities/gastly.png"))
 
 def keyPressed(app, event):
     if (event.key == "Enter" and not app.keysPressed["Enter"]):
@@ -163,9 +165,8 @@ def drawBoundingBoxes(app, canvas):
     for box in app.player.boundingBoxes:
         x0, y0, x1, y1 = app.player.boundingBoxes[box]
         canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")
-    for projectile in app.player.projectiles:
-        x0, y0, x1, y1 = projectile.boundingBox
-        canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")
+    for entity in app.stage.getEntities() + app.player.projectiles:
+        entity.drawBoundingBox(canvas)
 
 
 def main():

@@ -13,8 +13,9 @@ class Boss(Entity):
         canvas.create_rectangle(0, 0, hp * app.stage.width, 10, fill = "green")
 
 class Haunter(Boss):
-    def __init__(self, x, y):
-        super().__init__(x, y, 480, 150)
+    def __init__(self, x, y, stage):
+        super().__init__(x, y, 480, 120)
+        self.stage = stage
         self.scale = 6
         self.vx = 0
         self.vy = 0
@@ -33,9 +34,12 @@ class Haunter(Boss):
         canvas.create_image(self.x, self.y, anchor = "nw", 
                         image = app.sprites["haunter"]
                         [int(self.frameCount)])
-        canvas.create_rectangle(self.boundingBox)
         canvas.create_text(15 * 40, 17 * 40, text = self.text,
                 font = "System 36")
+    
+    def drawBoundingBox(self, canvas):
+        x0, y0, x1, y1 = self.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
 
     def move(self, app):
         if (self.hp < 1):
@@ -46,17 +50,20 @@ class Haunter(Boss):
         self.y += self.vy
         print(self.x, self.y)
         if (self.currentMove == "hex"):
-            print("WTFF")
             self.hex(app)
+        elif (self.currentMove == "swarm"):
+            self.swarm(app)
         elif (self.currentMove == "shadowBall"):
             self.shadowBall(app)
         elif (self.currentMove == "lick"):
             self.lick(app)
+        elif (self.currentMove == "exitRight"):
+            self.exitRight(app)
         elif (self.currentMove == "returnToCenter"):
             self.returnToCenter(app)
         elif (self.moveTimer == 100):
             self.moveTimer = 0
-            self.currentMove = "hex"
+            self.currentMove = "swarm"
         self.frameCount += 0.5
         self.frameCount %= 25
         self.moveTimer += 1
@@ -88,14 +95,12 @@ class Haunter(Boss):
     def hex(self, app):
         self.text = "The wild Haunter used Hex!"
         x0, y0, x1, y1 = self.boundingBox
-        if (self.moveTimer == 50):
+        if (self.moveTimer > 20):
             self.moveTimer = 0
-            self.currentMove = "returnToCenter"
+            self.currentMove = "exitRight"
         elif (self.moveTimer == 1):
             app.stage.entities += [HelixBall(x0, y1, 50, -6, 20, 60)]
             app.stage.entities += [HelixBall(x0, y1, 50, -6, -20, 60)]
-        elif (self.moveTimer > 20):
-            self.vx = 20
 
 
     def shadowBall(self, app):
@@ -120,6 +125,13 @@ class Haunter(Boss):
         elif (self.moveTimer > 20 and 
             (self.moveTimer % 25 == 21 or self.moveTimer % 25 == 4)):
             app.stage.entities += [Ball(x0, y1, 50, -20, 0)]
+
+    def exitRight(self, app):
+        if (self.moveTimer == 1):
+            self.vx = 16
+        elif (self.moveTimer > 30):
+            self.moveTimer = 0
+            self.currentMove = "returnToCenter"
 
     def returnToCenter(self, app):
         if (self.moveTimer == 1):
@@ -147,4 +159,14 @@ class Haunter(Boss):
             self.vx = 3
         elif (self.moveTimer < 15):
             self.vx = 0
+
+    def swarm(self, app):
+        self.text = "A swarm of Gastlys appeared!"
+        if (self.moveTimer == 150):
+            self.moveTimer = 0
+            self.currentMove = "exitRight"
+        elif (self.moveTimer % 16 == 0):
+            app.stage.entities += [Gastly(1200, randint(0, 800), app)]
+
         
+    # def meanLook(self, app):
