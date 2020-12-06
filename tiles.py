@@ -33,9 +33,13 @@ class Tile(object):
         self.x = x
         self.y = y
         self.size = size
+        self.color = "black"
 
     def __repr__(self):
         return f"{type(self)} at ({self.x}, {self.y})"
+
+    def __hash__(self):
+        return hash(self.x, self.y, self.size)
 
     def centerOfTile(self):
         return (self.x, self.y)
@@ -94,5 +98,19 @@ class Save(Square):
     def __init__(self, x, y, size, stage):
         super().__init__(x,y, size)
         self.stage = stage
+        self.color = "red"
+
+class VanishingTile(Square):
+    def __init__(self, x, y, size, stage):
+        super().__init__(x,y, size)
+        self.timer = 0
+        self.stage = stage
+
+    def move(self):
+        if (self.timer > 20):
+            self.stage.movingTiles.remove(self)
+        elif (self.timer > 0):
+            self.timer += 1
+
 
 

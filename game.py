@@ -47,6 +47,8 @@ def keyPressed(app, event):
     elif (event.key == "b"):
         print(app.showBoundingBoxes)
         app.showBoundingBoxes = not app.showBoundingBoxes
+    elif (event.key == "g"):
+        app.player.godMode = not app.player.godMode
     elif (event.key == "p"):
         app.paused = not app.paused
     elif (event.key == "x"):
@@ -69,20 +71,24 @@ def timerFired(app):
 def doStep(app):
     app.start = time.time()
     # print (app.keysPressed)
-    if (app.keysPressed["a"]):
-        app.player.vx = -10
-        app.player.facing = -1
-    elif (app.keysPressed["d"]):
-        app.player.vx = 10
-        app.player.facing = 1
+    if (not app.player.death):
+        if (app.keysPressed["a"]):
+            app.player.vx = -10
+            app.player.facing = -1
+        elif (app.keysPressed["d"]):
+            app.player.vx = 10
+            app.player.facing = 1
+        else:
+            app.player.vx = 0
+        if (app.player.isJumping):
+            app.player.jump(app)
+        for projectile in app.player.projectiles:
+            if (projectile.move(app) == "save"):
+                recordSave(app)
     else:
         app.player.vx = 0
-    if (app.player.isJumping):
-        app.player.jump(app)
+        app.player.vy = 0
     border = moveObjects(app)
-    for projectile in app.player.projectiles:
-        if (projectile.move(app) == "save"):
-            recordSave(app)
     if (border != 0):
         changeStage(app, border)
 
@@ -124,8 +130,14 @@ def redrawAll(app, canvas):
         drawBoundingBoxes(app, canvas)
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
                         text = int(calculateFPS(app)))
-    canvas.create_text(30, 500, font = "Arial 15 bold", 
-                        text = str(app.player.platform))
+    if (app.player.death):
+        canvas.create_rectangle(120, 280, 1080, 520, fill = "white",
+            outline = "gray")
+        canvas.create_text(app.width / 2, app.height / 2, 
+            font = "Terminal 100 bold", 
+            text = "    You died!\nPress R to restart")
+    # canvas.create_text(30, 500, font = "Arial 15 bold", 
+    #                     text = str(app.player.platform))
 
 def drawBoss(app, canvas):
     if (app.stage.boss == None):
@@ -136,7 +148,7 @@ def drawBoss(app, canvas):
 def drawTiles(app, canvas):
     for tile in app.stage.getTiles():
         x0, y0, x1, y1 = tile.boundingBox
-        canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
+        canvas.create_rectangle(x0, y0, x1, y1, fill = tile.color)
 
 def drawEntities(app, canvas):
     for entity in app.stage.entities:
@@ -149,7 +161,9 @@ def drawCharacter(app, canvas):
         r = projectile.r
         canvas.create_oval(x - r, y - r, x + r, y + r, fill = "yellow")
     if (app.player.death):
-        canvas.create_text(app.player.x, app.player.y, fill = "red", text = "DED")
+        canvas.create_oval(app.player.x, app.player.y, app.player.x +
+            app.player.w, app.player.y + app.player.h, fill = "red",
+            outline = "")
     else:
         if (app.player.facing == -1):
             canvas.create_image(app.player.x, app.player.y, 
@@ -157,14 +171,17 @@ def drawCharacter(app, canvas):
         else:
             canvas.create_image(app.player.x, app.player.y, 
                         image = app.sprites["rightKirby"], anchor = "nw")
+        if (app.player.godMode):
+            canvas.create_text(app.player.x + app.player.w / 2, 
+                app.player.y - 10, text = "Invincible")
 
 def drawBoundingBoxes(app, canvas):
     for tile in app.stage.getTiles():
         x0, y0, x1, y1 = tile.boundingBox
-        canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")
+        canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
     for box in app.player.boundingBoxes:
         x0, y0, x1, y1 = app.player.boundingBoxes[box]
-        canvas.create_rectangle(x0, y0, x1, y1, width = 1, outline = "green")
+        canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
     for entity in app.stage.getEntities() + app.player.projectiles:
         entity.drawBoundingBox(canvas)
 

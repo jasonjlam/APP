@@ -16,9 +16,9 @@ class Stage(object):
         self.tileSize = 40
         self.rowTiles = height // self.tileSize
         self.colTiles = width // self.tileSize
-        self.generateTilesFromCSV(file)
         self.movingTiles = []
         self.entities = []
+        self.generateTilesFromCSV(file)
         self.generateMovingTiles()
         self.generateEntities()
         self.boss = None
@@ -33,11 +33,18 @@ class Stage(object):
         for row in range(len(CSV)):
             for col in range(len(CSV[row])):
                 # print(CSV[row][col])
+                x = col * self.tileSize
+                y = row * self.tileSize
                 if (CSV[row][col] == 0):
                     # print("Generating tile")
-                    x = col * self.tileSize
-                    y = row * self.tileSize
-                    self.tiles.append(Square(x,y, self.tileSize))
+                    self.tiles.append(Square(x, y, self.tileSize))
+                elif (CSV[row][col] == 1):
+                    self.entities.append(UpwardSpike(x, y, self.tileSize))
+                elif (CSV[row][col] == 2):
+                    self.tiles.append(Save(x, y, 20, self))
+                elif (CSV[row][col] == 3):
+                    self.movingTiles.append(VanishingTile(
+                        x, y, self.tileSize, self))
 
     def generateTiles(self):
         self.tiles = set()
@@ -70,7 +77,7 @@ def createStage(stage, width, height):
     w = width
     h = height
     stages = {1: Stage1(w, h), 2:Stage2(w, h), 3: Stage3(w,h), 4: Stage4(w,h),
-            5: Stage5(w, h)}
+            5: Stage5(w, h), 6: Stage6(w,h), 7: Stage7(w,h)}
     return stages[stage]
 
 def readCSV(file):
@@ -93,21 +100,21 @@ class Stage1(Stage):
                                     0, 4)
         self.movingTiles.append(platform1)
 
-    def generateEntities(self):
-        spike1 = UpwardSpike(16 * 40, 14 * 40, 40)
-        self.entities.append(spike1)
-
 class Stage2(Stage):
     def __init__(self, width, height):
         super().__init__(width, height, "stages/2.csv")
         self.entrance = "blocked"
         self.exit = "right"
         self.boss = Haunter(20 * 40, 3 * 40, self)
+
+    def addTiles(self):
+        for i in range(9, 30):
+            self.tiles.append(Square(40 * i, 15 * self.tileSize, self.tileSize))
         
 class Stage3(Stage):
     def __init__(self, width, height):
         super().__init__(width, height, "stages/3.csv")
-        self.entrance = "left"
+        self.entrance = "blocked"
         self.exit = "top"
 
     def generateMovingTiles(self):
@@ -126,6 +133,22 @@ class Stage5(Stage):
         super().__init__(width, height, "stages/5.csv")
         self.entrance = "bot"
         self.exit = "top"
+
+class Stage6(Stage):
+    def __init__(self, width, height):
+        super().__init__(width, height, "stages/6.csv")
+        self.entrance = "bot"
+        self.exit = "left"
+
+class Stage7(Stage):
+    def __init__(self, width, height):
+        super().__init__(width, height, "stages/7.csv")
+        self.entrance = "right"
+        self.exit = "left"
+
+    def generateMovingTiles(self):
+        platform1 = MovingPlatform(0, 16 * 40, 28 * 40, 16 * 40, 80, 8, 0)
+        self.movingTiles.append(platform1)
 
 
 

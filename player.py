@@ -22,6 +22,7 @@ class Player(object):
         self.facing = 1
         self.projectiles = []
         self.death = False
+        self.godMode = False
 
     def shoot(self):
         if (len(self.projectiles) < 5):
@@ -137,13 +138,16 @@ class Player(object):
          "platform": False}
         self.updateBoundingBoxes(self.x + vx, self.y + vy)
         boundingBox = self.boundingBoxes
-        for entity in entities:
-            if (entity.isTouching(boundingBox)):
-                self.death = True
+        if (not self.godMode):
+            for entity in entities:
+                if (entity.isTouching(boundingBox)):
+                    self.death = True
         for tile in tiles:
             if (vy >= 0):
                 if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["bot"])):
+                    if (isinstance(tile, VanishingTile)):
+                        tile.timer += 1
                     collisions["bot"] = True
                     if (isinstance(tile, MovingPlatform)):
                         self.platform = tile
@@ -151,14 +155,20 @@ class Player(object):
                 if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["top"])):
                     collisions["top"] = True
+                    if (isinstance(tile, VanishingTile)):
+                        tile.timer += 1
             if (vx <= 0):
                 if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["left"])):
                     collisions["left"] = True
+                    if (isinstance(tile, VanishingTile)):
+                        tile.timer += 1
             elif (vx >= 0):
                 if (boxesIntersect(tile.boundingBox, 
                                         boundingBox["right"])):
                     collisions["right"] = True
+                    if (isinstance(tile, VanishingTile)):
+                        tile.timer += 1
         self.updateGround(collisions["bot"])
         return collisions
 

@@ -15,7 +15,6 @@ class Boss(Entity):
 class Haunter(Boss):
     def __init__(self, x, y, stage):
         super().__init__(x, y, 480, 120)
-        self.stage = stage
         self.scale = 6
         self.vx = 0
         self.vy = 0
@@ -24,32 +23,19 @@ class Haunter(Boss):
         self.frameCount = 0
         self.numFrames = 25
         self.moveTimer = 0
+        self.ai = {"jumping": 0, "falling": 0, "averageY": 300,
+             "still": 0, "moving": 0}
+        self.moveChance = [0.2, 0.2, 0.2, 0.2, 0.2]
         self.text = "A wild Haunter appeared!"
         self.updateBoundingBox()
+        self.lastMove = ""
         self.currentMove = ""
+        self.enrage = False
 
-    def draw(self, app, canvas):
-        self.drawHP(app, canvas)
-        # print(int(self.frameCount))
-        canvas.create_image(self.x, self.y, anchor = "nw", 
-                        image = app.sprites["haunter"]
-                        [int(self.frameCount)])
-        canvas.create_text(15 * 40, 17 * 40, text = self.text,
-                font = "System 36")
-    
-    def drawBoundingBox(self, canvas):
-        x0, y0, x1, y1 = self.boundingBox
-        canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
-
-    def move(self, app):
-        if (self.hp < 1):
-            app.stage.boss = None
-            self.text = "The wild Haunter fainted!"
-        self.updateBoundingBox()
-        self.x += self.vx
-        self.y += self.vy
-        print(self.x, self.y)
-        if (self.currentMove == "hex"):
+    def attack(self, app):
+        if (self.currentMove == "nightShade"):
+            self.nightShade(app)
+        elif (self.currentMove == "hex"):
             self.hex(app)
         elif (self.currentMove == "swarm"):
             self.swarm(app)
@@ -61,13 +47,87 @@ class Haunter(Boss):
             self.exitRight(app)
         elif (self.currentMove == "returnToCenter"):
             self.returnToCenter(app)
-        elif (self.moveTimer == 100):
+        elif (self.moveTimer == 40):
             self.moveTimer = 0
+            self.determineMove(app)
+
+    def adjustProbabilities(self, app):
+        self.ai["averageY"] = self.ai["averageY"] * 0.8 + 0.2 * app.player.y
+        print(self.ai)
+        moveIndexes = {"nightShade": 0, "hex": 1, "swarm": 2, "shadowBall": 3,
+            "lick": 4}
+        if (self.lastMove != ""):
+            index = moveIndexes[self.lastMove]
+            adjust = self.moveChance[index] / 4
+            self.moveChance[index] = 0
+            print(self.moveChance)
+            if (self.ai["averageY"] < 200):
+                self.moveChance[3] += 0.1
+            if (self.ai["averageY"] > 400 and self.y > 300):
+                self.moveChance[1] += 0.1
+            if (4 * self.ai["moving"] > self.ai["still"]):
+                self.moveChance[2] += 0.1
+            else:
+                self.moveChance[0] += 0.1
+            self.moveChance[4] += 0.1
+            self.ai["moving"] = 0
+            self.ai["still"] = 0
+            for i in range(len(self.moveChance)):
+                if (i != index):
+                    self.moveChance[i] += adjust
+            total = sum(self.moveChance)
+            for i in range(len(self.moveChance)):
+                self.moveChance[i] /= total
+
+    def determineMove(self, app):
+        self.adjustProbabilities(app)
+        rng = random()
+        print(rng)
+        if (rng < self.moveChance[0]):
+            self.currentMove = "nightShade"
+        elif (rng < sum(self.moveChance[0:2])):
+            self.currentMove = "hex"
+        elif (rng < sum(self.moveChance[0:3])):
             self.currentMove = "swarm"
+        elif (rng < sum(self.moveChance[0:4])):
+            self.currentMove = "shadowBall"
+        elif (rng < sum(self.moveChance)):
+            self.currentMove = "lick"
+        self.lastMove = self.currentMove
+
+    def draw(self, app, canvas):
+        self.drawHP(app, canvas)
+        # print(int(self.frameCount))
+        canvas.create_image(self.x, self.y, anchor = "nw", 
+                        image = app.sprites["haunter"]
+                        [int(self.frameCount)])
+        canvas.create_text(15 * 40, 17 * 40, text = self.text,
+                font = "System 36")
+        canvas.create_text(70, 500, font = "Arial 15 bold",
+            text = f"Move timer: {self.moveTimer}")
+    
+    def drawBoundingBox(self, canvas):
+        x0, y0, x1, y1 = self.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
+
+    def move(self, app):
+        if (abs(app.player.vy > 1)):
+            self.ai["moving"] += 1
+        else:
+            self.ai["still"] += 1
+        if (self.hp < 1):
+            app.stage.boss = None
+            app.stage.addTiles()
+            self.text = "The wild Haunter fainted!"
+        if (self.hp < 40):
+            self.enrage = True
+        self.updateBoundingBox()
+        self.x += self.vx
+        self.y += self.vy
+        self.attack(app)
         self.frameCount += 0.5
         self.frameCount %= 25
         self.moveTimer += 1
-        print(self.moveTimer)
 
     def updateBoundingBox(self):
         if (self.frameCount < 14):
@@ -99,8 +159,12 @@ class Haunter(Boss):
             self.moveTimer = 0
             self.currentMove = "exitRight"
         elif (self.moveTimer == 1):
-            app.stage.entities += [HelixBall(x0, y1, 50, -6, 20, 60)]
-            app.stage.entities += [HelixBall(x0, y1, 50, -6, -20, 60)]
+            if (self.enrage):
+                vx = -9
+            else:
+                vx = -6
+            app.stage.entities += [HelixBall(x0, y1, 50, vx, 20, 60)]
+            app.stage.entities += [HelixBall(x0, y1, 50, vx, -20, 60)]
 
 
     def shadowBall(self, app):
@@ -124,7 +188,13 @@ class Haunter(Boss):
             self.vy = 7
         elif (self.moveTimer > 20 and 
             (self.moveTimer % 25 == 21 or self.moveTimer % 25 == 4)):
-            app.stage.entities += [Ball(x0, y1, 50, -20, 0)]
+            if (self.enrage):
+                size = 65
+                vx = -25
+            else:
+                size = 50
+                vx = -20
+            app.stage.entities += [Ball(x0, y1, size, vx, 0)]
 
     def exitRight(self, app):
         if (self.moveTimer == 1):
@@ -139,6 +209,10 @@ class Haunter(Boss):
             self.vy = 0
             self.vx = -16
             self.y = randint(0, 400)
+            if (self.enrage):
+                self.text = "The wild Haunter is enraged!"
+            else:
+                self.text = "The wild Haunter is charging up!"
         elif (self.moveTimer > 26):
             self.x = 20 * 40
             self.vx = 0
@@ -150,11 +224,24 @@ class Haunter(Boss):
         if (self.moveTimer == 100):
             self.moveTimer = 0
             self.currentMove = "returnToCenter"
+        if (self.moveTimer == 60):
+            if (app.player.vy > 0):
+                self.ai["jumping"] += 1
+            elif (app.player.vy < 0):
+                self.ai["falling"] += 1
         elif (self.moveTimer == 30):
+            if (self.ai["jumping"] > self.ai["falling"]):
+                adjust = -75
+            else:
+                adjust = 75
+            if (self.enrage):
+                scale = 25
+            else:
+                scale = 30
             vectorX = app.player.x - self.x
-            vectorY = app.player.y - self.y - 200
-            self.vx = vectorX / 30
-            self.vy = vectorY / 30
+            vectorY = app.player.y - self.y - 200 + adjust
+            self.vx = vectorX / scale
+            self.vy = vectorY / scale
         elif (self.moveTimer < 30):
             self.vx = 3
         elif (self.moveTimer < 15):
@@ -165,8 +252,32 @@ class Haunter(Boss):
         if (self.moveTimer == 150):
             self.moveTimer = 0
             self.currentMove = "exitRight"
-        elif (self.moveTimer % 16 == 0):
-            app.stage.entities += [Gastly(1200, randint(0, 800), app)]
+        if (self.enrage):
+            if (self.moveTimer % 13 == 0):
+                app.stage.entities += [Gastly(1200, randint(0, 800), app)]
+        else:
+            if (self.moveTimer % 16 == 0):
+                app.stage.entities += [Gastly(1200, randint(0, 800), app)]
 
         
-    # def meanLook(self, app):
+    def nightShade(self, app):
+        self.text = "The wild Haunter used Night Shade!"
+        if (self.moveTimer > 90):
+            self.moveTimer = 0
+            self.currentMove = "exitRight"
+        if (self.moveTimer == 10):
+            if (self.ai["averageY"] < 200):
+                y0 = 0
+                y1 = 400
+            elif (self.ai["averageY"] > 500):
+                y0 = 300
+                y1 = 700
+            else:
+                y0 = int(self.ai["averageY"] - 200)
+                y1 = int(self.ai["averageY"] + 200)
+            if (self.enrage):
+                num = 13
+            else:
+                num = 10
+            for i in range(num):
+                app.stage.entities += [Marker(randint(0, 450), randint(y0, y1))]

@@ -144,14 +144,12 @@ class Gastly(Ball):
     def move(self, app):
         if (not self.display):
             app.stage.entities.remove(self)
-        elif (self.hp == 0 or self.timer > 1000):
+        elif (self.hp == 0 or self.timer > 500):
             self.display = False
         vectorX = app.player.x - self.x 
         vectorY = app.player.y - self.y
-        print(self.vx, self.vy)
         distance = vectorX ** 2 + vectorY ** 2
         if (self.homing and distance > 20000):
-            print("adjusting")
             if (self.vx < -6):
                 self.vx += 1
             elif (self.vx > 6):
@@ -179,4 +177,54 @@ class Gastly(Ball):
         x = self.x - 58
         y = self.y - 56
         canvas.create_image(x, y, anchor = "nw", image = app.sprites["gastly"])
+
+class Marker(Ball):
+    def __init__(self, x, y):
+        super().__init__(x, y, 8, 0, 0)
+        self.timer = 0
+        self.moving = True
+
+    def move(self, app):
+        if (self.timer > 30):
+            size = 125
+            app.stage.entities += [NightShade(self.x - size / 2,
+                self. y - size / 2, size)]
+            app.stage.entities.remove(self)
+        self.timer += 1
+
+    def draw(self, app, canvas):
+        canvas.create_oval(self.x - self.r, self.y - self.r, self.x + self.r,
+            self.y + self.r, fill = "red")
+
+    def isTouching(self, boundingBoxes):
+        return False
+
+class NightShade(Entity):
+    def __init__(self, x, y, size):
+        super().__init__(x, y, size)
+        self.timer = 0
+        self.moving = True
+        self.boundingBox = (x, y, x + size, y + size)
+    
+    def move(self, app):
+        if (self.timer > 100):
+            app.stage.entities.remove(self)
+        self.timer += 1
+
+    def drawBoundingBox(self, canvas):
+        x0, y0, x1, y1 = self.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
+
+    def draw(self, app, canvas):
+        x = self.x
+        y = self.y
+        size = self.size
+        canvas.create_rectangle(x, y, x + size, y + size, fill = "purple")
+
+    def isTouching(self, boundingBoxes):
+        for box in boundingBoxes:
+            boundingBox = boundingBoxes[box]
+            if (boxesIntersect(self.boundingBox, boundingBox)):
+                return True
+        return False
 
