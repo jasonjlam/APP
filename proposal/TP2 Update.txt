@@ -1,0 +1,10 @@
+TP2 Update
+
+- Added Bosses.py, which handles the boss fights in the game
+- Enemy AI implemented (limits the amount of velocity change)
+- Added some tiles (spikes, vanishing tiles)
+- Added the ability to shoot
+- Added the ability to save (by shooting a certain tile)
+- Implemented some more debug buttons (showing boundingBoxes, invincibility)
+- Implemented proper player death
+- Will probably implement a second boss fight and more stages
