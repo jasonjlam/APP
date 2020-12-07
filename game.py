@@ -6,8 +6,8 @@ from stages import *
 from audio import *
 import time
 
-def appStarted(app, x = 100, y = 700, stage = 1):
-    app.player = Player(x, y)
+
+def appStarted(app, x = 100, y = 700, stage = None):
     app.keysPressed = {"a": False, "d": False, "w": False, "s": False, 
                        "Space": False, "Enter": False}
     app.saveStage = stage
@@ -17,8 +17,13 @@ def appStarted(app, x = 100, y = 700, stage = 1):
     app.FPS = 0
     app.start = 0
     initializeSprites(app)
-    app.currentStage = stage
-    app.stage = createStage(stage, app.width, app.height)
+    if (stage != None):
+        print("went back to stage")
+        app.stage = stage
+        app.player = Player(x, y)
+    else:
+        app.stage = Stage(app.width, app.height, randint(4,16), randint(8,16))
+        app.player = Player(-10, app.stage.startY * app.stage.tileSize - 42)
     app.paused = False
     app.showBoundingBoxes = False
     app.audio = Audio()
@@ -45,7 +50,6 @@ def keyPressed(app, event):
         if (event.key == "Space"):
             app.player.isJumping = True
     elif (event.key == "b"):
-        print(app.showBoundingBoxes)
         app.showBoundingBoxes = not app.showBoundingBoxes
     elif (event.key == "g"):
         app.player.godMode = not app.player.godMode
@@ -88,9 +92,8 @@ def doStep(app):
     else:
         app.player.vx = 0
         app.player.vy = 0
-    border = moveObjects(app)
-    if (border != 0):
-        changeStage(app, border)
+    if (moveObjects(app)):
+        app.stage = app.stage.generateNewStage()
 
 def moveObjects(app):
     for tile in app.stage.movingTiles:
@@ -105,11 +108,8 @@ def moveObjects(app):
 def recordSave(app):
     app.saveX = app.player.x
     app.saveY = app.player.y
-    app.saveStage = app.currentStage
+    app.saveStage = app.stage
 
-def changeStage(app, border):
-    app.currentStage += border
-    app.stage = createStage(app.currentStage, app.width, app.height)
 
 def calculateFPS(app):
     millisecond = 1000

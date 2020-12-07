@@ -1,32 +1,7 @@
 # Holds all of the tiles for each stage, and their many different types
 
 from cmu_112_graphics import *
-
-def boxesIntersect(box1, box2, debug = False):
-    if (debug):
-        print(box1, box2)
-    x0, y0, x1, y1 = box1
-    x2, y2, x3, y3 = box2
-    offset = 0.1
-    return not (x2 - offset >= x1 or x0 - offset >= x3 
-            or y2 - offset >= y1 or y0 - offset >= y3)
-
-def isPointIn(box, x, y):
-    x0, y0, x1, y1 = box
-    return (x > x0 and x < x1 and y > y0 and y < y1)
-
-def boxIntersectsCircle(box, x, y, r):
-    x0, y0, x1, y1 = box
-    w = x1 - x0
-    h = y1 - y0
-    xDistance = abs((x0 + x1) / 2 - x)
-    yDistance = abs((y0 + y1) / 2 - y)
-
-    if (xDistance > w / 2 + r or yDistance > h / 2 + r):
-        return False
-    elif (xDistance <= w / 2 or yDistance <= h / 2):
-        return True
-    return ((xDistance - w / 2)**2 + (yDistance - h / 2) **2 <= r ** 2)
+from entities import *
 
 class Tile(object):
     def __init__(self, x, y, size):
@@ -111,6 +86,26 @@ class VanishingTile(Square):
             self.stage.movingTiles.remove(self)
         elif (self.timer > 0):
             self.timer += 1
+
+class FireBar(Square):
+    def __init__(self, x, y, size, r, period, direction, stage):
+        super().__init__(x, y, size)
+        self.period = period
+        self.r = r
+        self.stage = stage
+        self.ballR = 10
+        self.direction = direction
+        self.createFireballs(stage)
+
+    def createFireballs(self, stage):
+        self.fireballs = []
+        r = 0
+        cx, cy = self.centerOfTile()
+        while (self.r > r):
+            newCX = cx + r
+            stage.entities += [RotatingBall(newCX, cy, self.ballR, r, 
+                self.direction, self.period)]
+            r += self.ballR * 2
 
 
 

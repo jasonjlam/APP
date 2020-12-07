@@ -57,13 +57,14 @@ class Player(object):
         for tile in stage.getTiles():
             if (tile.inProximity(self.x + 25, self.y + 25)):
                 tiles += [tile]
-        entities = []
-        for entity in stage.getEntities():
-            if (entity.inProximity(self.x + 25, self.y + 25)):
-                entities += [entity]
+        if (not self.godMode):
+            for entity in stage.getEntities():
+                if (entity.inProximity(self.x + 25, self.y + 25)):
+                    if (entity.isTouching(self.boundingBoxes)):
+                        self.death = True
         self.groundCheck(stage, tiles)
         # print(self.x, self.y)
-        self.moveWithCollision(stage, self.vx, self.vy, tiles, entities)
+        self.moveWithCollision(stage, self.vx, self.vy, tiles)
         self.updateBoundingBoxes(self.x, self.y)
         if (self.platform != None):
             if (not self.platform.onPlatform(self.boundingBoxes)):
@@ -87,7 +88,7 @@ class Player(object):
         
 
 
-    def moveWithCollision(self, stage, vx, vy, tiles, entities, depth = 0):
+    def moveWithCollision(self, stage, vx, vy, tiles, depth = 0):
         # print("Start", vx)
         if (vx == 0 and vy == 0):
             return (0, 0)
@@ -101,8 +102,7 @@ class Player(object):
             currentStep += 1
             currentVX += xStep
             currentVY += yStep
-            collisions = self.checkCollisions(stage, currentVX, 
-                                        currentVY, tiles, entities)
+            collisions = self.checkCollisions(stage, currentVX, currentVY, tiles)
             for key in collisions:
                 if (collisions[key]):
                     currentVX -= xStep
@@ -112,8 +112,7 @@ class Player(object):
                         self.vx = 0
                         self.x += currentVX
                         if (depth < 1):
-                            self.moveWithCollision(stage, 0, vy, tiles, 
-                                entities, 1)
+                            self.moveWithCollision(stage, 0, vy, tiles, 1)
                         else:
                             self.y += currentVY
                         return
@@ -121,8 +120,7 @@ class Player(object):
                         self.vy = 0
                         self.y += currentVY
                         if (depth < 1):
-                            self.moveWithCollision(stage, vx, 0, tiles,
-                                entities, 1)
+                            self.moveWithCollision(stage, vx, 0, tiles, 1)
                         else:
                             self.x += currentVX
                         return 
@@ -131,17 +129,13 @@ class Player(object):
         self.x += vx
         self.y += vy
 
-    def checkCollisions(self, stage, vx, vy, tiles, entities):
+    def checkCollisions(self, stage, vx, vy, tiles):
         # print("Collisions being checked")
         # print(tiles)
         collisions = {"top": False, "left": False, "right": False, "bot": False,
          "platform": False}
         self.updateBoundingBoxes(self.x + vx, self.y + vy)
         boundingBox = self.boundingBoxes
-        if (not self.godMode):
-            for entity in entities:
-                if (entity.isTouching(boundingBox)):
-                    self.death = True
         for tile in tiles:
             if (vy >= 0):
                 if (boxesIntersect(tile.boundingBox, 
@@ -187,44 +181,18 @@ class Player(object):
         self.boundingBoxes = {"top": (1 + x, 0 + y, 46 + x, 1 + y), 
         "left": (0 + x, 2 + y, 24 + x, 40 + y), 
         "right": (25 + x, 2 + y, 47 + x, 40 + y),
-        "bot": (1 + x, 20 + y, 46 + x, 41 + y)}
+        "bot": (1  + x, 20 + y, 46 + x, 41 + y)}
 
     def checkBorders(self, stage):
-        border = None
-        borders = [stage.exit, stage.entrance]
         if (self.x < -25):
-            border = "left"
-            if (border in borders):
-                self.x = stage.width - 23
-            else:
-                self.x = -25
+            self.x = -25
         elif (self.x > stage.width - 25):
-            border = "right"
-            if (border in borders):
-                self.x = -23
-            else:
-                self.x = stage.width - 25
+            self.x = -23
+            return True
         elif (self.y < -25):
-            border = "top"
-            if (border in borders):
-                self.y = stage.height - 23
-                self.vy += -10
-            else:
-                self.y = -25
+            self.y = -25
         elif (self.y > stage.height - 25):
-            border = "bot"
-            if (border in borders):
-                self.y = -23
-            else:
-                self.y = stage.height - 25
-        if (border == stage.exit):
-            self.projectiles = []
-            return 1
-        elif (border == stage.entrance):
-            self.projectiles = []
-            return -1
-        else:
-            return 0
+            self.y = stage.height - 25
 
 class PlayerProjectile(object):
     def __init__(self, x, y, vx):

@@ -1,27 +1,55 @@
 # Contains all of the hostile entities, that subclass the Entity class
-# Entity class is subclassed from Tile for center and proximity methods
 
-from tiles import *
 from math import *
 from random import *
 
-class Entity(Tile):
+def boxesIntersect(box1, box2, debug = False):
+    if (debug):
+        print(box1, box2)
+    x0, y0, x1, y1 = box1
+    x2, y2, x3, y3 = box2
+    offset = 0.1
+    return not (x2 - offset >= x1 or x0 - offset >= x3 
+            or y2 - offset >= y1 or y0 - offset >= y3)
+
+def isPointIn(box, x, y):
+    x0, y0, x1, y1 = box
+    return (x > x0 and x < x1 and y > y0 and y < y1)
+
+def boxIntersectsCircle(box, x, y, r):
+    x0, y0, x1, y1 = box
+    w = x1 - x0
+    h = y1 - y0
+    xDistance = abs((x0 + x1) / 2 - x)
+    yDistance = abs((y0 + y1) / 2 - y)
+
+    if (xDistance > w / 2 + r or yDistance > h / 2 + r):
+        return False
+    elif (xDistance <= w / 2 or yDistance <= h / 2):
+        return True
+    return ((xDistance - w / 2)**2 + (yDistance - h / 2) **2 <= r ** 2)
+
+class Entity(object):
     def __init__(self, x, y, size):
-        super().__init__(x,y, size)
+        self.x = x
+        self.y = y
+        self.size = size
+        self.color = ""
         self.hp = -100
         self.moving = False
 
-    def move(self, app, yOffset = 300):
+    def move(self, app, yOffset = 300, ignoreBorder = False):
         entities = app.stage.entities
         self.x += self.vx
         self.y += self.vy
         x = self.x
         y = self.y
-        if (self.x < 0 - self.size / 2 or self.x > app.stage.width + 
-            self.size / 2 or self.y < 0 - yOffset or
-            self.y > app.stage.height + yOffset):
-            entities.remove(self)
-            return
+        if (not ignoreBorder):
+            if (self.x < 0 - self.size / 2 or self.x > app.stage.width + 
+                self.size / 2 or self.y < 0 - yOffset or
+                self.y > app.stage.height + yOffset):
+                entities.remove(self)
+                return
         if (self.isTouching(app.player.boundingBoxes)):
             self.color = "red"
         elif (self.color == "red"):
@@ -32,6 +60,20 @@ class Entity(Tile):
 
     def draw(self):
         pass
+
+    def __repr__(self):
+        return f"{type(self)} at ({self.x}, {self.y})"
+
+    def __hash__(self):
+        return hash(self.x, self.y, self.size)
+
+    def centerOfTile(self):
+        return (self.x, self.y)
+    
+    def inProximity(self, x, y, extra = 25):
+        d = self.size + extra
+        cx, cy = self.centerOfTile()
+        return abs(cx - x) < d and abs(cy - y) < d
 
 class UpwardSpike(Entity):
     def __init__(self, x, y, size):
@@ -75,11 +117,11 @@ class UpwardSpike(Entity):
             canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
 
 class Ball(Entity):
-    def __init__(self, x, y, size, vx, vy):
+    def __init__(self, x, y, r, vx, vy):
         self.x = x
         self.y = y
-        self.size = size * 2
-        self.r = size
+        self.size = r * 2
+        self.r = r
         self.vx = vx
         self.vy = vy
         self.hp = -100
@@ -112,8 +154,8 @@ class Ball(Entity):
             self.y + self.r, outline = "green")
 
 class HelixBall(Ball):
-    def __init__(self, x, y, size, vx, vy, period):
-        super().__init__(x, y, size, vx, vy)
+    def __init__(self, x, y, r, vx, vy, period):
+        super().__init__(x, y, r, vx, vy)
         self.maxVY = vy
         self.theta = 0
         self.period = 60
@@ -227,4 +269,27 @@ class NightShade(Entity):
             if (boxesIntersect(self.boundingBox, boundingBox)):
                 return True
         return False
+
+class RotatingBall(Ball):
+    def __init__(self, x, y, r, orbitR, direction, period):
+        super().__init__(x, y, r, 0, 0)
+        self.theta = 0
+        self.period = period
+        self.r = r
+        self.orbitR = orbitR
+        self.direction = direction
+        self.color = "red"
+
+    def move(self, app):
+        self.theta += 1
+        if (self.theta >= self.period):
+            self.theta = 0
+        direction = self.direction * -1
+        r = self.orbitR
+        print(self.vx, self.vy, r, self.theta)
+        frequency = 2 * pi / self.period * direction
+        self.vx = r * frequency * -sin(self.theta * frequency)
+        self.vy = r * frequency * cos(self.theta * frequency)
+        super().move(app, 500, True)
+
 
