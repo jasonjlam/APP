@@ -12,7 +12,7 @@ class Player(object):
         self.vy = 0
         self.w = 48
         self.h = 44
-        self.jumpVelocity = -26
+        self.jumpVelocity = -27
         self.onGround = True
         self.platform = None
         self.isJumping = False
@@ -34,7 +34,7 @@ class Player(object):
         # print(self.doubleJumpPrimed)
         if (self.jumps > 1 and self.vy > -3 or 
             (self.jumps > 0  and self.vy > -3 and self.doubleJumpPrimed)):
-            app.audio.jumpAudio()
+            app.audio.playAudio("jump")
             self.vy = self.jumpVelocity
             self.platform = None
             self.onGround = False

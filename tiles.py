@@ -24,6 +24,9 @@ class Tile(object):
         cx, cy = self.centerOfTile()
         return abs(cx - x) < d and abs(cy - y) < d
 
+    def draw(self, app, canvas):
+        pass
+
 class Square(Tile):
     def __init__(self, x, y, size):
         super().__init__(x,y, size)
@@ -32,6 +35,10 @@ class Square(Tile):
 
     def centerOfTile(self):
         return (self.x + self.size / 2, self.y + self.size / 2)
+
+    def draw(self, app, canvas):
+        x0, y0, x1, y1 = self.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, fill = self.color)
 
 
 class MovingPlatform(Tile):

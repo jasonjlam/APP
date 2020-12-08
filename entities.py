@@ -50,10 +50,10 @@ class Entity(object):
                 self.y > app.stage.height + yOffset):
                 entities.remove(self)
                 return
-        if (self.isTouching(app.player.boundingBoxes)):
-            self.color = "red"
-        elif (self.color == "red"):
-            self.color = "purple"
+        # if (self.isTouching(app.player.boundingBoxes)):
+        #     self.color = "red"
+        # elif (self.color == "red"):
+        #     self.color = "purple"
             
     def drawBoundingBox(self):
         pass
@@ -279,6 +279,8 @@ class RotatingBall(Ball):
         self.orbitR = orbitR
         self.direction = direction
         self.color = "red"
+        self.initX = x
+        self.initY = y
 
     def move(self, app):
         self.theta += 1
@@ -286,10 +288,55 @@ class RotatingBall(Ball):
             self.theta = 0
         direction = self.direction * -1
         r = self.orbitR
-        print(self.vx, self.vy, r, self.theta)
         frequency = 2 * pi / self.period * direction
-        self.vx = r * frequency * -sin(self.theta * frequency)
+        self.vx = r * frequency * -1 * sin(self.theta * frequency)
         self.vy = r * frequency * cos(self.theta * frequency)
         super().move(app, 500, True)
+        if (self.theta == 0):
+            self.x = self.initX
+            self.y = self.initY
 
 
+class VerticalLaser(Entity):
+    def __init__(self, x, y, size, period):
+        super().__init__(x, y, size)
+        self.width = 10
+        self.height = size
+        self.color = "orange"
+        self.hp = -100
+        self.moving = True
+        self.timer = 0
+        self.boundingBox = (x + 15, y, x + 25, y + size)
+        self.period = period
+
+    def move(self, app):
+        self.timer = (self.timer + 1) % self.period
+        if (self.timer < self.period / 2):
+            self.boundingBox = (self.x + 15, self.y, self.x + 25,
+                self.y + self.size)
+        else:
+            self.boundingBox = None
+
+    def drawBoundingBox(self):
+        if (self.boundingBox != None):
+            x0, y0, x1, y1 = self.boundingBox
+            canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
+
+    def draw(self, app, canvas):
+        if (self.boundingBox != None):
+            x0, y0, x1, y1 = self.boundingBox
+            canvas.create_rectangle(x0, y0, x1, y1, outline = "", 
+            fill = self.color)
+
+    def centerOfTile(self):
+        return (self.x + 20, self.y + self.width / 2)
+
+    def isTouching(self, boundingBoxes):
+        if (self.boundingBox != None):
+            for box in boundingBoxes:
+                boundingBox = boundingBoxes[box]
+                if (boxesIntersect(self.boundingBox, boundingBox)):
+                    return True
+        return False
+
+    

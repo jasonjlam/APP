@@ -254,10 +254,10 @@ class Haunter(Boss):
             self.currentMove = "exitRight"
         if (self.enrage):
             if (self.moveTimer % 13 == 0):
-                app.stage.entities += [Gastly(1200, randint(0, 800), app)]
+                app.stage.entities += [Gastly(1600, randint(0, 800), app)]
         else:
             if (self.moveTimer % 16 == 0):
-                app.stage.entities += [Gastly(1200, randint(0, 800), app)]
+                app.stage.entities += [Gastly(1600, randint(0, 800), app)]
 
         
     def nightShade(self, app):

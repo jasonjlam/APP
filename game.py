@@ -147,8 +147,7 @@ def drawBoss(app, canvas):
 
 def drawTiles(app, canvas):
     for tile in app.stage.getTiles():
-        x0, y0, x1, y1 = tile.boundingBox
-        canvas.create_rectangle(x0, y0, x1, y1, fill = tile.color)
+        tile.draw(app, canvas)
 
 def drawEntities(app, canvas):
     for entity in app.stage.entities:
@@ -187,7 +186,7 @@ def drawBoundingBoxes(app, canvas):
 
 
 def main():
-    runApp(width = 1200, height = 800)
+    runApp(width = 1600, height = 800)
 
 if __name__ == '__main__':
     main()
