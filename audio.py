@@ -6,7 +6,7 @@ import atexit
 class Audio (object):
     def __init__(self):
         pygame.mixer.init()
-        audio = {"jump": 0.5, "death" : 0.25, 'shoot': 0.1, 'wallHit': 0.2, 'enemyHit': 0.2,
+        audio = {"jump": 0.5, 'shoot': 0.1, 'wallHit': 0.2, 'enemyHit': 0.2,
         "gastly": 0.15, "haunter": 0.15}
         self.audio = {}
         for key in audio.keys():
@@ -15,7 +15,7 @@ class Audio (object):
 
     def playAudio(self, key):
         self.audio[key].play()
-    def playMusic(self, key):
+    def playMusic(self, key, volume):
         pygame.mixer.music.load(f"assets/music/{key}")
-        pygame.mixer.music.play()
-        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(volume)

@@ -14,7 +14,7 @@ class Boss(Entity):
 
 class Haunter(Boss):
     def __init__(self, x, y, stage):
-        super().__init__(x, y, 480, 1)
+        super().__init__(x, y, 480, 90 + stage.num)
         self.scale = 6
         self.vx = 0
         self.vy = 0
@@ -60,14 +60,14 @@ class Haunter(Boss):
 
     def adjustProbabilities(self, app):
         self.ai["averageY"] = self.ai["averageY"] * 0.8 + 0.2 * app.player.y
-        print(self.ai)
+        # print(self.ai)
         moveIndexes = {"nightShade": 0, "hex": 1, "swarm": 2, "shadowBall": 3,
             "lick": 4}
         if (self.lastMove != ""):
             index = moveIndexes[self.lastMove]
             adjust = self.moveChance[index] / 4
             self.moveChance[index] = 0
-            print(self.moveChance)
+            # print(self.moveChance)
             if (self.ai["averageY"] < 200):
                 self.moveChance[3] += 0.1
             if (self.ai["averageY"] > 400 and self.y > 300):
@@ -89,7 +89,7 @@ class Haunter(Boss):
     def determineMove(self, app):
         self.adjustProbabilities(app)
         rng = random()
-        print(rng)
+        # print(rng)
         if (rng < self.moveChance[0]):
             app.audio.playAudio("haunter")
             self.currentMove = "nightShade"
@@ -132,7 +132,7 @@ class Haunter(Boss):
             self.currentMove = "faint"
             app.audio.playAudio("haunter")
         elif (self.currentMove == "initialized" and self.moveTimer == 0):
-            app.audio.playMusic("haunter.mp3")
+            app.audio.playMusic("haunter.mp3", 0.08)
         if (self.hp < 40):
             self.enrage = True
         self.updateBoundingBox()
@@ -142,7 +142,7 @@ class Haunter(Boss):
         if (self.currentMove != "faint"):
             self.frameCount += 0.5
             self.frameCount %= 25
-        print("self.moveTimer")
+        # print("self.moveTimer")
         self.moveTimer += 1
 
     def updateBoundingBox(self):
@@ -176,9 +176,9 @@ class Haunter(Boss):
             self.currentMove = "exitRight"
         elif (self.moveTimer == 1):
             if (self.enrage):
-                vx = -14
+                vx = -8
             else:
-                vx = -10
+                vx = -6
             app.stage.entities += [HelixBall(x0, y1, 50, vx, 25, 60)]
             app.stage.entities += [HelixBall(x0, y1, 50, vx, -25, 60)]
 
@@ -299,13 +299,13 @@ class Haunter(Boss):
                 app.stage.entities += [Marker(randint(0, 450), randint(y0, y1))]
 
     def faint(self, app):
-        print(self.moveTimer)
         self.text = "The wild Haunter fainted!"
         if (self.moveTimer > 140):
             app.stage.boss = None
             app.stage.addTiles()
         elif (self.moveTimer == 40):
             self.vy = 60
-        else:
+            app.audio.playMusic("victory.mp3", 0.2)
+        elif (self.moveTimer < 40):
             self.vx = 0
             self.vy = 0

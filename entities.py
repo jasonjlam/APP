@@ -87,9 +87,9 @@ class UpwardSpike(Entity):
         size = self.size
         index = 1
         while(y < self.y + size):
-            boxes.append((x - size / 8 * index, y, x + size / 8 * index, 
-                            y + size / 4))
-            y += size / 4   
+            boxes.append((x - size / 16 * index, y, x + size / 16 * index, 
+                            y + size / 8))
+            y += size / 8   
             index += 1
         return boxes
 
@@ -104,12 +104,7 @@ class UpwardSpike(Entity):
         return False
 
     def draw(self, app, canvas):
-        x = self.x
-        y = self.y
-        size = self.size
-        canvas.create_line(x + size / 2, y, x, y + size)
-        canvas.create_line(x + size / 2, y, x + size, y + size)
-        canvas.create_line(x, y + size, x + size, y + size)
+        canvas.create_image(self.x, self.y, image = app.sprites["spike"], anchor = "nw")
 
     def drawBoundingBox(self, canvas):
         for box in self.boundingBoxes:
@@ -245,6 +240,7 @@ class Dart(Ball):
     def __init__(self, x, y, r, vx, vy):
         super().__init__(x, y, r, vx, vy)
         self.color = "green"
+        self.displayed = True
 
     def isTouching(self, boundingBoxes):
         for box in boundingBoxes:
@@ -259,7 +255,7 @@ class Dart(Ball):
             return
         stage = app.stage
         self.x += self.vx
-        self.vx -= 0.1
+        self.vx -= 0.2
         if (self.x < 0 or self.x > stage.width):
             self.displayed = False
             return
@@ -363,6 +359,10 @@ class VerticalLaser(Entity):
             x0, y0, x1, y1 = self.boundingBox
             canvas.create_rectangle(x0, y0, x1, y1, outline = "", 
             fill = self.color)
+            x0 += 3
+            x1 -= 3
+            canvas.create_rectangle(x0, y0, x1, y1, outline = "", 
+            fill = "navajo white")
 
     def centerOfTile(self):
         return (self.x + 20, self.y + self.width / 2)

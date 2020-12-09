@@ -38,7 +38,7 @@ class Square(Tile):
 
     def draw(self, app, canvas):
         x0, y0, x1, y1 = self.boundingBox
-        canvas.create_image(x0, y0, image = app.sprites["dirt"], anchor = "nw")
+        canvas.create_image(x0, y0, image = app.sprites["brick"], anchor = "nw")
 
 
 class MovingPlatform(Tile):
@@ -57,7 +57,7 @@ class MovingPlatform(Tile):
     def centerOfTile(self):
         return (self.x + self.size / 2, self.y + self.thickness / 2)
 
-    def move(self):
+    def move(self, app):
         self.oldBoundingBox = self.boundingBox
         self.lastx = self.x
         self.lasty = self.y
@@ -76,11 +76,17 @@ class MovingPlatform(Tile):
         x4, y4, x5, y6 = self.boundingBox
         return (x3 > x4 and x0 < x5)
 
+    def draw(self, app, canvas):
+        x0, y0, x1, y1 = self.boundingBox
+        canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
+
 class Save(Square):
     def __init__(self, x, y, size, stage):
         super().__init__(x,y, size)
         self.stage = stage
         self.color = "red"
+    def draw(self, app, canvas):
+        canvas.create_image(self.x, self.y, anchor = "nw", image = app.sprites["save"])
 
 class VanishingTile(Square):
     def __init__(self, x, y, size, stage):
@@ -88,11 +94,14 @@ class VanishingTile(Square):
         self.timer = 0
         self.stage = stage
 
-    def move(self):
+    def move(self, app):
         if (self.timer > 20):
             self.stage.movingTiles.remove(self)
         elif (self.timer > 0):
             self.timer += 1
+
+    def draw(self, app, canvas):
+        canvas.create_image(self.x, self.y, anchor = "nw", image = app.sprites["cracked"])
 
 class FireBar(Square):
     def __init__(self, x, y, size, r, period, direction, stage):
@@ -124,7 +133,14 @@ class DartTrap(Square):
 
     def move(self, app):
         if (self.timer > self.period):
-            app.stage.entities += [Dart(x, y + size / 2, 10, -10, 0)]
+            app.stage.entities += [Dart(self.x - self.size / 2,
+                self.y + self.size / 2, 10, -10, 0)]
+            self.timer = 0
+        self.timer += 1
+
+    def draw(self, app, canvas):
+        x0, y0, x1, y1 = self.boundingBox
+        canvas.create_image(x0, y0, image = app.sprites["dartTrap"], anchor = "nw")
 
 
 

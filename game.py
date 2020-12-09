@@ -7,9 +7,10 @@ from audio import *
 import time
 
 
-def appStarted(app, x = 100, y = 700, stage = None):
+def appStarted(app, x = 100, y = 700, stage = None, title = True):
     app.keysPressed = {"a": False, "d": False, "w": False, "s": False, 
                        "Space": False, "Enter": False}
+    app.title = title
     app.saveStage = stage
     app.saveX = x
     app.saveY = y
@@ -19,11 +20,10 @@ def appStarted(app, x = 100, y = 700, stage = None):
     app.currentFrame = 1
     initializeSprites(app)
     if (stage != None):
-        print("went back to stage")
         app.stage = stage
         app.player = Player(x, y)
     else:
-        app.stage = Stage(app.width, app.height, randint(12,17), randint(12,17))
+        app.stage = Stage(app.width, app.height, randint(12,17), randint(12,17), 1)
         app.player = Player(-10, app.stage.startY * app.stage.tileSize - 42)
     app.paused = False
     app.showBoundingBoxes = False
@@ -47,28 +47,36 @@ def initializeSprites(app):
             "assets/entities/gastly.png"))
     app.sprites["grassBackground"] = ImageTk.PhotoImage(app.loadImage(
         "assets/grassbackground.png"))
-    for sprite in ["dirt", "grass"]:
+    for sprite in ["cracked", "brick", "dartTrap", "spike", "save"]:
         app.sprites[sprite] = ImageTk.PhotoImage(app.loadImage(
             f"assets/tiles/{sprite}.png"))
+    for sprite in ["title", "death"]:
+        app.sprites[sprite] = ImageTk.PhotoImage(app.loadImage(
+            f"assets/{sprite}.png"))
 
 def keyPressed(app, event):
-    if (not app.player.death):
-        if (event.key == "Enter" and not app.keysPressed["Enter"]):
-            app.player.shoot(app)
-        if (event.key == "Space"):
-            app.player.isJumping = True
-    if ((event.key) in app.keysPressed):
-        app.keysPressed[event.key] = True
-    elif (event.key == "b"):
-        app.showBoundingBoxes = not app.showBoundingBoxes
-    elif (event.key == "g"):
-        app.player.godMode = not app.player.godMode
-    elif (event.key == "p"):
-        app.paused = not app.paused
-    elif (event.key == "x"):
-        doStep(app)
-    elif (event.key == "r"):
-        appStarted(app, app.saveX, app.saveY, app.saveStage)
+    if (app.title):
+        app.title = False
+        app.audio.playMusic("stage.mp3", 0.2)
+    else:
+        if (not app.player.death):
+            if (event.key == "Enter" and not app.keysPressed["Enter"]):
+                app.player.shoot(app)
+            if (event.key == "Space"):
+                app.player.isJumping = True
+        if ((event.key) in app.keysPressed):
+            app.keysPressed[event.key] = True
+        elif (event.key == "b"):
+            app.showBoundingBoxes = not app.showBoundingBoxes
+        elif (event.key == "g"):
+            app.player.godMode = not app.player.godMode
+        elif (event.key == "p"):
+            app.paused = not app.paused
+        elif (event.key == "x"):
+            doStep(app)
+        elif (event.key == "r"):
+            appStarted(app, app.saveX, app.saveY, app.saveStage, False)
+            app.audio.playMusic("stage.mp3", 0.2)
 
 def keyReleased(app, event):
     if ((event.key) in app.keysPressed):
@@ -79,12 +87,11 @@ def keyReleased(app, event):
                 app.player.doubleJumpPrimed = True
 
 def timerFired(app):
-    if (not app.paused):
+    if (not app.paused and not app.title):
         doStep(app)
 
 def doStep(app):
     app.start = time.time()
-    # print (app.keysPressed)
     if (not app.player.death):
         if (app.keysPressed["a"]):
             app.player.vx = -10
@@ -104,7 +111,7 @@ def doStep(app):
         app.player.vy = 0
         app.player.onGround = True
     if (moveObjects(app)):
-        app.stage = app.stage.generateNewStage()
+        app.stage = app.stage.generateNewStage(app)
     if (app.player.death):
         app.currentFrame = 14
     elif (not(app.player.onGround or app.player.platform != None)):
@@ -121,7 +128,7 @@ def doStep(app):
 
 def moveObjects(app):
     for tile in app.stage.movingTiles:
-        tile.move()
+        tile.move(app)
     for entity in app.stage.entities:
         if (entity.moving):
             entity.move(app)
@@ -156,11 +163,12 @@ def redrawAll(app, canvas):
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
                         text = int(calculateFPS(app)))
     if (app.player.death):
-        canvas.create_text(app.width / 2, app.height / 2, 
-            font = "Terminal 100 bold", fill = "red",
-            text = "    You died!\nPress R to restart")
+        canvas.create_image(0, 0, anchor = "nw", image = app.sprites["death"])
+    elif (app.title):
+        canvas.create_image(0, 0, anchor = "nw", image = app.sprites["title"])
     # canvas.create_text(30, 500, font = "Arial 15 bold", 
     #                     text = str(app.player.platform))
+    canvas.create_text(130, app.height - 20, font = "Terminal 26", text = f"Stage: {app.stage.num}")
 
 def drawBackground(app, canvas):
     canvas.create_image(0, 0,  image = app.sprites["grassBackground"], 

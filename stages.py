@@ -20,6 +20,7 @@ def addBumps(textureMap):
 
 class Stage(object):
     def __init__(self, width, height, startY, endY, num = 1):
+        self.platforms = []
         self.width = width
         self.height = height
         self.tileSize = 40
@@ -34,7 +35,6 @@ class Stage(object):
         self.entities = []
         self.boss = None
         self.generateStage()
-        self.generateTraps()
         self.stageToTiles()
 
     def generateStage(self):
@@ -44,7 +44,7 @@ class Stage(object):
         self.stage[self.startY][1] = 1
         self.stage[self.endY][self.numCols - 2] = 1
         self.stage[self.endY][self.numCols - 1] = 1
-        pitChance = 0.3 + self.num / 30
+        pitChance = 0.3 + self.num / 50
         if (random() < pitChance):
             self.generatePit()
         else:
@@ -64,22 +64,24 @@ class Stage(object):
             yOffset = 0
             while (abs(yOffset) < 3):
                 yOffset = randint(-4, 4)
-                print(yOffset)
             y += yOffset
-            if (y < 6):
-                y = 6
+            if (y < 3):
+                y = 3
             if (y > 18):
                 y = 18
             x += randint(-1, 2)
-            width = randint(3,4)
-            for extraX in range(width):
-                if (x + extraX < self.numCols - 2):
-                    self.stage[y][x + extraX] = 1
+            width = min(randint(3,5), max(2, self.numCols - 3 - x))
+            self.platforms += [Platform(x * self.tileSize, y * self.tileSize,
+                width * self.tileSize, self.tileSize)]
             x += width
+        for platform in self.platforms:
+            platform.toStage(self)
         if (y - self.endY) > 4:
             while (y > self.endY):
-                self.stage[y][self.numCols -3] = 1
+                self.stage[y][self.numCols - 3] = 1
                 y += randint(-4, -3)
+        self.generatePlatforms(0.07, 17)
+        self.generateTraps(3 + self.num)
 
     def generateSlope(self):
         slope = (self.endY - self.startY) / (self.numCols)
@@ -89,24 +91,6 @@ class Stage(object):
             terrainMap += [y]
         for i in range(2):
             terrainMap += [self.endY]
-        yMin = self.startY
-        while (yMin > 3):
-            x = 2
-            while (x < self.numCols - 4):
-                yOffset = randint(-7, -4)
-                y = terrainMap[x] + yOffset + yMin - self.startY
-                print(terrainMap[x], y)
-                if (y < 2):
-                    y = 2
-                if (y > 18):
-                    y = 18
-                x += randint(2, 4)
-                width = randint(2, 8)
-                for extraX in range(width):
-                    if (x + extraX < self.numCols - 2):
-                        self.stage[y][x + extraX] = 1
-                x += width
-            yMin -= randint(3, 4)
         addBumps(terrainMap)
         for i in range(1, len(terrainMap) - 2):
             if (terrainMap[i] != terrainMap[i + 1]):
@@ -120,11 +104,28 @@ class Stage(object):
                         self.stage[y][i] = 1
         for i in range(len(terrainMap)):
             self.stage[terrainMap[i]][i] = 1
+        self.generatePlatforms(0.15, max(self.startY, self.endY))
+        self.generateTraps(6 + self.num * 1.5)
 
-    def generateTraps(self):
-        trapScore = 10 + (self.num) / 3
+    def generatePlatforms(self, platformChance, y):
+        for row in range(2, y):
+            for col in range(2, self.numCols - 2):
+                if (random() < platformChance):
+                    # print("platform", row, col)
+                    width = min(randint(2,11), max(2, 
+                        self.numCols - col - 3))*self.tileSize
+                    # print(width // self.tileSize)
+                    platform = (Platform(col * self.tileSize, 
+                    row * self.tileSize, width, self.tileSize))
+                    if (platform.isValid(self.stage)):
+                        # print("valid platform")
+                        self.platforms.append(platform)
+                        platform.toStage(self)
+
+
+    def generateTraps(self, trapScore):
         currentScore = 0
-        traps = {"FireBar": 0, "Spike": 0, "Laser": 0}
+        traps = {"FireBar": 0, "Spike": 0, "Laser": 0, "DartTrap": 0}
         iterations = 0
         while (currentScore < trapScore and iterations < 1000):
             while (iterations < 1000):
@@ -134,14 +135,18 @@ class Stage(object):
                 if (self.stage[row][col] == 1):
                     rng = random()
                     if (not self.checkAdjacentTraps(row, col)):
-                        if (rng < 0.2 and traps["Laser"] < 3):
+                        if (rng < 0.2 and traps["Laser"] < 5):
                             if (self.generateLaser()):
                                 currentScore += 2
                                 traps["Laser"] += 1
-                        elif (rng < 0.4 and traps["FireBar"] < 3):
+                        elif (rng < 0.4 and traps["FireBar"] < 5):
                             self.stage[row][col] = 5
-                            currentScore += 2
+                            currentScore += 3
                             traps["FireBar"] += 1
+                        elif (rng < 0.6 and traps["DartTrap"] < 4):
+                            currentScore += 2
+                            self.stage[row][col] = 7
+                            traps["DartTrap"] += 1
                         elif (rng < 1):
                             self.stage[row - 1][col] = 2
                             currentScore += 1
@@ -157,16 +162,18 @@ class Stage(object):
             if (self.stage[row][col] == 1):
                 if (self.stage[row + 1][col] != 0
                     or self.stage[row + 2][col] != 0):
-                    print("blocked")
                     continue
                 for i in range(row + 3, self.numRows - 1):
-                    if (self.stage[i][col] != 0):
+                    if (self.stage[i][col] not in [-1, 0]):
                         self.stage[row + 1][col] = 6
                         return True
         return False
+
     def checkAdjacentTraps(self, row, col):
-        for r in range(-2, 2):
-            for c in range(-2, 2):
+        if (row + 3 > self.numRows or col + 3 > self.numCols):
+            return False
+        for r in range(-2, 3):
+            for c in range(-2, 3):
                 if (r != 0 or c != 0):
                     if (self.stage[row + r][col + c] in [2, 5]):
                         return True
@@ -191,26 +198,32 @@ class Stage(object):
                         x, y, self.tileSize, self))
                 elif (self.stage[row][col] == 5):
                     self.tiles.append(FireBar(x, y, self.tileSize, 
-                    randint(100, 200) + self.num, randint(60, 100) - self.num / 2,
+                    randint(100, 200) + self.num, randint(90, 120) - self.num / 2,
                     [-1, 1][randint(0,1)], self))
                 elif (self.stage[row][col] == 6):
                     height = 40
                     for i in range(1, self.numRows - 1 - row):
-                        if (self.stage[row + i][col] != 0):
+                        if (self.stage[row + i][col] not in [-1, 0]):
                             height = i * self.tileSize
-                            print(i, self.stage[i][col], height)
                             break
                     self.entities.append(VerticalLaser(x, y, 
-                    height, randint(70, 100) - self.num / 2))
+                    height, randint(70, 100) - self.num))
+                elif (self.stage[row][col] == 7):
+                    platform = choice(self.platforms)
+                    self.movingTiles.append(DartTrap(platform.x, platform.y, self.tileSize, -20,
+                        randint(60, 100) - self.num, self))
 
 
-    def generateNewStage(self):
-        print("stage", self.num)
+    def generateNewStage(self, app):
+        print(self.num)
         startY = self.endY
-        if (self.num == 2):
-            return HaunterStage(self.width, self.height, 15)
-        elif (self.num == 3):
+        if (self.num % 15 == 0):
+            return HaunterStage(self.width, self.height, self.num + 1)
+        elif (self.num % 15 == 14):
             endY = 15
+        elif (self.num % 15 == 1 and self.num != 1):
+            app.audio.playMusic("stage.mp3", 0.2)
+            endY = randint(12, 17)
         else:
             endY = randint(12, 17)
         return Stage(self.width, self.height, startY, endY, self.num + 1)
@@ -225,28 +238,45 @@ class Stage(object):
             return self.entities
 
 class Platform (object):
-    def __init__(self, x, y, w, row, col):
+    def __init__(self, x, y, w, tileSize):
+        self.tileSize = tileSize
         self.x = x
         self.y = y
-        self.row = row
-        self.col = col
+        self.row = y // self.tileSize
+        self.col = x // self.tileSize
         self.w = w
+        self.wCells = w // self.tileSize 
+        rng = random()
+        if (rng < 0.1):
+            self.type = 4
+        elif (rng < 0.2):
+            self.type = -1
+        else:
+            self.type = 1
 
     def __hash__(self):
         return hash(self.x, self.y, self.w)
 
+    def __repr__(self):
+        return f"Platform at {self.x}, {self.y}, type = {self.type}"
+
     def isValid(self, stage):
-        matrix = stage[self.row - 2, self.row + 3][self.col - 2, 
-            self.col + self.w + 3]
-        for row in len(matrix):
-            for col in range(len(matrix[0])):
-                if (matrix[row][col] != 0):
+        if (self.col + self.wCells + 2 > 39):
+            return False
+        elif (self.row + 3 > 19):
+            return False
+        for row in range(self.row - 2, self.row + 3):
+            for col in range(self.col - 2, self.col + self.wCells + 3):
+                if (stage[row][col] != 0):
                     return False
         return True
 
     def toStage(self, stage):
-        for i in range(self.w):
-            matrix[self.row][col + i] = 1 
+        if (self.type < 0 and self.w > 200):
+            stage.movingTiles.append(MovingPlatform(self.x, self.y, 
+                self.x + self.w - 80, self.y, 80, 4, 0))
+        for i in range(self.wCells):
+            stage.stage[self.row][self.col + i] = self.type 
 
 class HaunterStage(Stage):
     def __init__(self, width, height, num):

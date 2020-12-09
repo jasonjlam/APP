@@ -63,7 +63,7 @@ class Player(object):
                 if (entity.inProximity(self.x + 25, self.y + 25)):
                     if (entity.isTouching(self.boundingBoxes)):
                         self.death = True
-                        app.audio.playAudio("death")
+                        app.audio.playMusic("death.wav", 0.2)
 
         self.groundCheck(app.stage, tiles)
         # print(self.x, self.y)
@@ -86,6 +86,8 @@ class Player(object):
         for tile in tiles:
             if (boxesIntersect(box, tile.boundingBox)):
                 ground = True
+                if (isinstance(tile, VanishingTile)):
+                    tile.timer = 1
                     # self.updateGround(ground, platform)
                     # return (vx, vy)
         self.updateGround(ground)
