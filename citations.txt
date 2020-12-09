@@ -1,4 +1,4 @@
-Citations (as of TP2)
+Citations (as of TP3)
 
 Assets
 
@@ -10,9 +10,30 @@ death.wav
 enemyHit.wav
 All Kirby sprites in /kirby
 
+Kirby Mass Attack
+grassbackground.png
+
+Yoshi's Island 2
+stage.mp3
+
+Pokemon Red and Blue
+haunter.mp3
+
 Pokemon Black and White
 gastly.png
 All Haunter sprites in /haunter
+victory.mp3
+
+Pokemon Sun and Moon
+gastly.wav
+haunter.wav
+
+Minecraft
+brick.png
+cracked.png
+
+Terraria
+dartTrap.png
 
 Concepts
 Speculative contacts for collision detection:

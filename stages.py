@@ -1,8 +1,6 @@
 # Has base class Stage, which defines each "zone" displayed on screen.
-# Subclasses Stage1, Stage2... represent each stage and their individual
-# assets/entities.
-# Stages import much of their tileset from /stages/(n).csv
-# These files are created with Tiled
+# Also has class Platform, which is used to randomly generate platforms
+# Also a special stage for the boss
 
 from random import *
 from tiles import *

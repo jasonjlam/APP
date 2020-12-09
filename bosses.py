@@ -1,3 +1,5 @@
+# Contains the boss fight for the game
+
 from entities import *
 from random import *
 

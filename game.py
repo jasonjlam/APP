@@ -1,4 +1,5 @@
-# Main game
+# Main game, run this to play the game
+# Holds all graphics functions
 
 from cmu_112_graphics import *
 from player import *

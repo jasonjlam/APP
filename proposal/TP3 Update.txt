@@ -1,0 +1,14 @@
+TP3 Update
+
+- Shifted over to randomly generated stages
+- Randomly generated stages have to maintain y axis from stage to stage
+- Added platform class to handle placement of platforms
+- Separately dealt with the boss stage for the boss fight
+- Let the game loop infinitely (as many stages as possible)
+- Boss appears every 15 stages
+- Added some more traps 
+- Set up randomly generated traps, that increase in number and complexity as time goes on
+- Added proper animations for running, jumping, and dying
+- Added music for stage, boss, victory, and dying
+- Changed sound effects, and also added hit sound effects
+- Added proper sprites for a lot of tiles
