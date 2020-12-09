@@ -23,7 +23,7 @@ def appStarted(app, x = 100, y = 700, stage = None, title = True):
         app.stage = stage
         app.player = Player(x, y)
     else:
-        app.stage = Stage(app.width, app.height, randint(12,17), randint(12,17), 1)
+        app.stage = Stage(app.width, app.height, randint(12,17), randint(12,17), 15)
         app.player = Player(-10, app.stage.startY * app.stage.tileSize - 42)
     app.paused = False
     app.showBoundingBoxes = False

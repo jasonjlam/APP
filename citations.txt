@@ -20,5 +20,4 @@ https://github.com/mattleibow/jitterphysics/wiki/Speculative-Contacts
 
 External tools/plugins
 Pygame (for audio only)
-Tiled (for creating .csv files to import as stages)
 cmu_112_graphics.py (for animation)
