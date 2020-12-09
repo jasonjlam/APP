@@ -24,11 +24,12 @@ class Player(object):
         self.death = False
         self.godMode = False
 
-    def shoot(self):
+    def shoot(self, app):
         if (len(self.projectiles) < 5):
             offset = 25
             self.projectiles += [PlayerProjectile(self.x + offset + 
-                self.facing * offset, self.y + 15, self.facing * 16)]
+                self.facing * offset, self.y + 15, self.facing * 20)]
+            app.audio.playAudio("shoot")
 
     def jump(self, app):
         # print(self.doubleJumpPrimed)
@@ -49,44 +50,45 @@ class Player(object):
         if (self.vy > 25):
             self.vy = 25
 
-    def move(self, stage):
+    def move(self, app):
         if (self.vy < 0):
             self.onGround = False
         self.moveJump()
         tiles = []
-        for tile in stage.getTiles():
+        for tile in app.stage.getTiles():
             if (tile.inProximity(self.x + 25, self.y + 25)):
                 tiles += [tile]
-        if (not self.godMode):
-            for entity in stage.getEntities():
+        if (not self.godMode and not self.death):
+            for entity in app.stage.getEntities():
                 if (entity.inProximity(self.x + 25, self.y + 25)):
                     if (entity.isTouching(self.boundingBoxes)):
                         self.death = True
-        self.groundCheck(stage, tiles)
+                        app.audio.playAudio("death")
+
+        self.groundCheck(app.stage, tiles)
         # print(self.x, self.y)
-        self.moveWithCollision(stage, self.vx, self.vy, tiles)
+        self.moveWithCollision(app.stage, self.vx, self.vy, tiles)
         self.updateBoundingBoxes(self.x, self.y)
         if (self.platform != None):
             if (not self.platform.onPlatform(self.boundingBoxes)):
                 self.platform = None
-        return self.checkBorders(stage)
+        return self.checkBorders(app.stage)
     
     def groundCheck(self, stage, tiles):
         ground = False
         platform = False
         x0, y0, x1, y1 = self.boundingBoxes["bot"]
+        y1 += 1
         box = (x0, y0, x1, y1)
         if (self.platform != None):
             self.y = self.platform.y - 42
             self.x += self.platform.vx
         for tile in tiles:
             if (boxesIntersect(box, tile.boundingBox)):
-                touching = True
+                ground = True
                     # self.updateGround(ground, platform)
                     # return (vx, vy)
         self.updateGround(ground)
-        
-
 
     def moveWithCollision(self, stage, vx, vy, tiles, depth = 0):
         # print("Start", vx)
@@ -163,7 +165,6 @@ class Player(object):
                     collisions["right"] = True
                     if (isinstance(tile, VanishingTile)):
                         tile.timer += 1
-        self.updateGround(collisions["bot"])
         return collisions
 
     def updateGround(self, isTouching):
@@ -189,10 +190,8 @@ class Player(object):
         elif (self.x > stage.width - 25):
             self.x = -23
             return True
-        elif (self.y < -25):
-            self.y = -25
         elif (self.y > stage.height - 25):
-            self.y = stage.height - 25
+            self.death = True
 
 class PlayerProjectile(object):
     def __init__(self, x, y, vx):
@@ -210,6 +209,7 @@ class PlayerProjectile(object):
     def move(self, app):
         if (not self.displayed):
             app.player.projectiles.remove(self)
+            return
         projectiles = app.player.projectiles
         stage = app.stage
         self.x += self.vx
@@ -223,11 +223,13 @@ class PlayerProjectile(object):
                     self.x, self.y, self.r)):
                     entity.hp -= 1
                     self.displayed = False
+                    app.audio.playAudio("enemyHit")
         for tile in stage.tiles:
             if (tile.inProximity(self.x, self.y, 40)):
                 if (boxIntersectsCircle(tile.boundingBox, self.x, self.y,
                     self.r)):
                     self.displayed = False
+                    app.audio.playAudio("wallHit")
                     if (isinstance(tile, Save)):
                         return "save"
                     return

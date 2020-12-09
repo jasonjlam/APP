@@ -16,13 +16,14 @@ def appStarted(app, x = 100, y = 700, stage = None):
     app.timerDelay = 20
     app.FPS = 0
     app.start = 0
+    app.currentFrame = 1
     initializeSprites(app)
     if (stage != None):
         print("went back to stage")
         app.stage = stage
         app.player = Player(x, y)
     else:
-        app.stage = Stage(app.width, app.height, randint(4,16), randint(8,16))
+        app.stage = Stage(app.width, app.height, randint(12,17), randint(12,17))
         app.player = Player(-10, app.stage.startY * app.stage.tileSize - 42)
     app.paused = False
     app.showBoundingBoxes = False
@@ -30,10 +31,13 @@ def appStarted(app, x = 100, y = 700, stage = None):
 
 def initializeSprites(app):
     app.sprites = {}
-    leftKirby = app.loadImage("assets/kirby/kirby.png")
-    app.sprites["rightKirby"] = ImageTk.PhotoImage(leftKirby)
-    leftKirby = leftKirby.transpose(Image.FLIP_LEFT_RIGHT)
-    app.sprites["leftKirby"] = ImageTk.PhotoImage(leftKirby)
+    app.sprites["rightKirby"] = []
+    app.sprites["leftKirby"] = []
+    for i in range(1, 15):
+        sprite = app.loadImage(f"assets/kirby/{i}.png")
+        app.sprites["rightKirby"].append(ImageTk.PhotoImage(sprite))
+        sprite = sprite.transpose(Image.FLIP_LEFT_RIGHT)
+        app.sprites["leftKirby"].append(ImageTk.PhotoImage(sprite))
     app.sprites["haunter"] = []
     for i in range(25):
         haunter = app.loadImage(fr"assets/entities/haunter/{i + 1}.gif")
@@ -41,14 +45,20 @@ def initializeSprites(app):
         app.sprites["haunter"].append(ImageTk.PhotoImage(haunter))
     app.sprites["gastly"] = ImageTk.PhotoImage(app.loadImage(
             "assets/entities/gastly.png"))
+    app.sprites["grassBackground"] = ImageTk.PhotoImage(app.loadImage(
+        "assets/grassbackground.png"))
+    for sprite in ["dirt", "grass"]:
+        app.sprites[sprite] = ImageTk.PhotoImage(app.loadImage(
+            f"assets/tiles/{sprite}.png"))
 
 def keyPressed(app, event):
-    if (event.key == "Enter" and not app.keysPressed["Enter"]):
-            app.player.shoot()
-    if ((event.key) in app.keysPressed):
-        app.keysPressed[event.key] = True
+    if (not app.player.death):
+        if (event.key == "Enter" and not app.keysPressed["Enter"]):
+            app.player.shoot(app)
         if (event.key == "Space"):
             app.player.isJumping = True
+    if ((event.key) in app.keysPressed):
+        app.keysPressed[event.key] = True
     elif (event.key == "b"):
         app.showBoundingBoxes = not app.showBoundingBoxes
     elif (event.key == "g"):
@@ -92,8 +102,22 @@ def doStep(app):
     else:
         app.player.vx = 0
         app.player.vy = 0
+        app.player.onGround = True
     if (moveObjects(app)):
         app.stage = app.stage.generateNewStage()
+    if (app.player.death):
+        app.currentFrame = 14
+    elif (not(app.player.onGround or app.player.platform != None)):
+        if (app.player.vy < 0):
+            app.currentFrame = 12
+        else:
+            app.currentFrame = 13
+    elif (app.player.vx != 0):
+        app.currentFrame += 0.5
+        if (app.currentFrame > 11):
+            app.currentFrame = 2
+    else:
+        app.currentFrame = 1
 
 def moveObjects(app):
     for tile in app.stage.movingTiles:
@@ -103,7 +127,7 @@ def moveObjects(app):
             entity.move(app)
     if (app.stage.boss != None):
         app.stage.boss.move(app)
-    return app.player.move(app.stage)
+    return app.player.move(app)
 
 def recordSave(app):
     app.saveX = app.player.x
@@ -122,6 +146,7 @@ def calculateFPS(app):
     # return alpha * FPS + beta * snapshotFPS
 
 def redrawAll(app, canvas):
+    drawBackground(app, canvas)
     drawCharacter(app, canvas)
     drawTiles(app, canvas)
     drawEntities(app, canvas)
@@ -131,13 +156,15 @@ def redrawAll(app, canvas):
     canvas.create_text(20, 20, font = "Arial 15 bold", fill = "teal", 
                         text = int(calculateFPS(app)))
     if (app.player.death):
-        canvas.create_rectangle(120, 280, 1080, 520, fill = "white",
-            outline = "gray")
         canvas.create_text(app.width / 2, app.height / 2, 
-            font = "Terminal 100 bold", 
+            font = "Terminal 100 bold", fill = "red",
             text = "    You died!\nPress R to restart")
     # canvas.create_text(30, 500, font = "Arial 15 bold", 
     #                     text = str(app.player.platform))
+
+def drawBackground(app, canvas):
+    canvas.create_image(0, 0,  image = app.sprites["grassBackground"], 
+        anchor = "nw")
 
 def drawBoss(app, canvas):
     if (app.stage.boss == None):
@@ -154,25 +181,25 @@ def drawEntities(app, canvas):
         entity.draw(app, canvas)
 
 def drawCharacter(app, canvas):
+    adjust = 0
+    if (app.currentFrame in [2, 7]):
+        adjust = 2
+    elif (app.currentFrame in [13]):
+        adjust = 4
     for projectile in app.player.projectiles:
         x = projectile.x
         y = projectile.y
         r = projectile.r
         canvas.create_oval(x - r, y - r, x + r, y + r, fill = "yellow")
-    if (app.player.death):
-        canvas.create_oval(app.player.x, app.player.y, app.player.x +
-            app.player.w, app.player.y + app.player.h, fill = "red",
-            outline = "")
+    if (app.player.facing == -1):
+        canvas.create_image(app.player.x + adjust, app.player.y - adjust, 
+            image = app.sprites["leftKirby"][int(app.currentFrame - 1)], anchor = "nw")
     else:
-        if (app.player.facing == -1):
-            canvas.create_image(app.player.x, app.player.y, 
-                        image = app.sprites["leftKirby"], anchor = "nw")
-        else:
-            canvas.create_image(app.player.x, app.player.y, 
-                        image = app.sprites["rightKirby"], anchor = "nw")
-        if (app.player.godMode):
-            canvas.create_text(app.player.x + app.player.w / 2, 
-                app.player.y - 10, text = "Invincible")
+        canvas.create_image(app.player.x + adjust, app.player.y - adjust, 
+            image = app.sprites["rightKirby"][int(app.currentFrame - 1)], anchor = "nw")
+    if (app.player.godMode):
+        canvas.create_text(app.player.x + app.player.w / 2, 
+            app.player.y - 10, text = "Invincible")
 
 def drawBoundingBoxes(app, canvas):
     for tile in app.stage.getTiles():
@@ -186,7 +213,7 @@ def drawBoundingBoxes(app, canvas):
 
 
 def main():
-    runApp(width = 1600, height = 800)
+    runApp(width = 1600, height = 800, mvcCheck = False)
 
 if __name__ == '__main__':
     main()

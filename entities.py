@@ -249,7 +249,7 @@ class NightShade(Entity):
         self.boundingBox = (x, y, x + size, y + size)
     
     def move(self, app):
-        if (self.timer > 100):
+        if (self.timer > 60):
             app.stage.entities.remove(self)
         self.timer += 1
 

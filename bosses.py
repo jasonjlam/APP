@@ -160,9 +160,9 @@ class Haunter(Boss):
             self.currentMove = "exitRight"
         elif (self.moveTimer == 1):
             if (self.enrage):
-                vx = -9
+                vx = -14
             else:
-                vx = -6
+                vx = -10
             app.stage.entities += [HelixBall(x0, y1, 50, vx, 20, 60)]
             app.stage.entities += [HelixBall(x0, y1, 50, vx, -20, 60)]
 
@@ -179,7 +179,7 @@ class Haunter(Boss):
             self.vx = 20
         elif (self.moveTimer == 15):
             self.vx = 0
-            self.x = 20 * 40
+            self.x = 30 * 40
             self.y = -500
             self.vy = 7
         elif (self.moveTimer % 25 == 22):
@@ -205,7 +205,7 @@ class Haunter(Boss):
 
     def returnToCenter(self, app):
         if (self.moveTimer == 1):
-            self.x = 30 * 40
+            self.x = 40 * 40
             self.vy = 0
             self.vx = -16
             self.y = randint(0, 400)
@@ -214,7 +214,7 @@ class Haunter(Boss):
             else:
                 self.text = "The wild Haunter is charging up!"
         elif (self.moveTimer > 26):
-            self.x = 20 * 40
+            self.x = 30 * 40
             self.vx = 0
             self.moveTimer = 0
             self.currentMove = ""

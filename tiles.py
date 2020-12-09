@@ -38,7 +38,7 @@ class Square(Tile):
 
     def draw(self, app, canvas):
         x0, y0, x1, y1 = self.boundingBox
-        canvas.create_rectangle(x0, y0, x1, y1, fill = self.color)
+        canvas.create_image(x0, y0, image = app.sprites["dirt"], anchor = "nw")
 
 
 class MovingPlatform(Tile):

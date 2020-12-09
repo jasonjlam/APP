@@ -26,7 +26,7 @@ class Stage(object):
         self.numRows = height // self.tileSize
         self.numCols = width // self.tileSize
         self.startY = startY
-        self.num = 1
+        self.num = num
         self.endY = endY
         self.tiles = []
         self.stage = [([0] * self.numCols) for row in range(self.numRows)]
@@ -38,7 +38,7 @@ class Stage(object):
         self.stageToTiles()
 
     def generateStage(self):
-        self.stage[self.startY - 2][1] = 3
+        self.stage[self.endY - 2][self.numCols - 1] = 3
         terrainMap = []
         self.stage[self.startY][0] = 1
         self.stage[self.startY][1] = 1
@@ -113,7 +113,7 @@ class Stage(object):
                 y0 = terrainMap[i]
                 y1 = terrainMap[i + 1]
                 if (y0 > y1):
-                    for y in range(y1, y0):
+                    for y in range(y1, y0 + 1):
                         self.stage[y][i] = 1
                 elif (y0 < y1):
                     for y in range(y0, y1 + 1):
@@ -206,8 +206,14 @@ class Stage(object):
 
 
     def generateNewStage(self):
+        print("stage", self.num)
         startY = self.endY
-        endY = randint(10, 17)
+        if (self.num == 2):
+            return HaunterStage(self.width, self.height, 15)
+        elif (self.num == 3):
+            endY = 15
+        else:
+            endY = randint(12, 17)
         return Stage(self.width, self.height, startY, endY, self.num + 1)
 
     def getTiles(self):
@@ -219,19 +225,34 @@ class Stage(object):
         else:
             return self.entities
 
-
-
-
-
-class Stage2(Stage):
-    def __init__(self, width, height):
-        super().__init__(width, height, "stages/2.csv")
-        self.entrance = "blocked"
-        self.exit = "right"
+class HaunterStage(Stage):
+    def __init__(self, width, height, num):
+        self.width = width
+        self.height = height
+        self.tileSize = 40
+        self.numRows = height // self.tileSize
+        self.numCols = width // self.tileSize
+        self.startY = 15
+        self.num = num
+        self.endY = 15
+        self.tiles = []
+        self.movingTiles = []
+        self.entities = []
+        self.generateTiles()
         self.boss = Haunter(30 * 40, 3 * 40, self)
 
+    def generateTiles(self):
+        for i in range(0, 12):
+            self.tiles.append(Square(40 * i, 15 * self.tileSize, self.tileSize))
+        for i in range(2, 7):
+            self.tiles.append(Square(40 * i, 11 * self.tileSize, self.tileSize))
+        for i in range(3, 8):
+            self.tiles.append(Square(40 * i, 7 * self.tileSize, self.tileSize))
+        for i in range(2, 7):
+            self.tiles.append(Square(40 * i, 3 * self.tileSize, self.tileSize))
+        
     def addTiles(self):
-        for i in range(9, 30):
+        for i in range(12, 40):
             self.tiles.append(Square(40 * i, 15 * self.tileSize, self.tileSize))
         
 
