@@ -14,7 +14,7 @@ class Boss(Entity):
 
 class Haunter(Boss):
     def __init__(self, x, y, stage):
-        super().__init__(x, y, 480, 120)
+        super().__init__(x, y, 480, 1)
         self.scale = 6
         self.vx = 0
         self.vy = 0
@@ -29,7 +29,7 @@ class Haunter(Boss):
         self.text = "A wild Haunter appeared!"
         self.updateBoundingBox()
         self.lastMove = ""
-        self.currentMove = ""
+        self.currentMove = "initialized"
         self.enrage = False
 
     def attack(self, app):
@@ -47,9 +47,16 @@ class Haunter(Boss):
             self.exitRight(app)
         elif (self.currentMove == "returnToCenter"):
             self.returnToCenter(app)
-        elif (self.moveTimer == 40):
-            self.moveTimer = 0
-            self.determineMove(app)
+        elif (self.currentMove == "faint"):
+            self.faint(app)
+        elif (self.enrage):
+            if (self.moveTimer == 80):
+                self.moveTimer = 0
+                self.determineMove(app)
+        else:
+            if (self.moveTimer == 60):
+                self.moveTimer = 0
+                self.determineMove(app)
 
     def adjustProbabilities(self, app):
         self.ai["averageY"] = self.ai["averageY"] * 0.8 + 0.2 * app.player.y
@@ -84,14 +91,19 @@ class Haunter(Boss):
         rng = random()
         print(rng)
         if (rng < self.moveChance[0]):
+            app.audio.playAudio("haunter")
             self.currentMove = "nightShade"
         elif (rng < sum(self.moveChance[0:2])):
             self.currentMove = "hex"
+            app.audio.playAudio("haunter")
         elif (rng < sum(self.moveChance[0:3])):
+            app.audio.playAudio("gastly")
             self.currentMove = "swarm"
         elif (rng < sum(self.moveChance[0:4])):
+            app.audio.playAudio("haunter")
             self.currentMove = "shadowBall"
         elif (rng < sum(self.moveChance)):
+            app.audio.playAudio("haunter")
             self.currentMove = "lick"
         self.lastMove = self.currentMove
 
@@ -115,18 +127,22 @@ class Haunter(Boss):
             self.ai["moving"] += 1
         else:
             self.ai["still"] += 1
-        if (self.hp < 1):
-            app.stage.boss = None
-            app.stage.addTiles()
-            self.text = "The wild Haunter fainted!"
+        if (self.hp < 1 and self.currentMove != "faint"):
+            self.moveTimer = 0
+            self.currentMove = "faint"
+            app.audio.playAudio("haunter")
+        elif (self.currentMove == "initialized" and self.moveTimer == 0):
+            app.audio.playMusic("haunter.mp3")
         if (self.hp < 40):
             self.enrage = True
         self.updateBoundingBox()
         self.x += self.vx
         self.y += self.vy
         self.attack(app)
-        self.frameCount += 0.5
-        self.frameCount %= 25
+        if (self.currentMove != "faint"):
+            self.frameCount += 0.5
+            self.frameCount %= 25
+        print("self.moveTimer")
         self.moveTimer += 1
 
     def updateBoundingBox(self):
@@ -163,8 +179,8 @@ class Haunter(Boss):
                 vx = -14
             else:
                 vx = -10
-            app.stage.entities += [HelixBall(x0, y1, 50, vx, 20, 60)]
-            app.stage.entities += [HelixBall(x0, y1, 50, vx, -20, 60)]
+            app.stage.entities += [HelixBall(x0, y1, 50, vx, 25, 60)]
+            app.stage.entities += [HelixBall(x0, y1, 50, vx, -25, 60)]
 
 
     def shadowBall(self, app):
@@ -220,7 +236,7 @@ class Haunter(Boss):
             self.currentMove = ""
 
     def lick(self, app):
-        self.text = "The wild Gastly used Lick!"
+        self.text = "The wild Haunter used Lick!"
         if (self.moveTimer == 100):
             self.moveTimer = 0
             self.currentMove = "returnToCenter"
@@ -281,3 +297,15 @@ class Haunter(Boss):
                 num = 10
             for i in range(num):
                 app.stage.entities += [Marker(randint(0, 450), randint(y0, y1))]
+
+    def faint(self, app):
+        print(self.moveTimer)
+        self.text = "The wild Haunter fainted!"
+        if (self.moveTimer > 140):
+            app.stage.boss = None
+            app.stage.addTiles()
+        elif (self.moveTimer == 40):
+            self.vy = 60
+        else:
+            self.vx = 0
+            self.vy = 0

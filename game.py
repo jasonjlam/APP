@@ -182,7 +182,7 @@ def drawEntities(app, canvas):
 
 def drawCharacter(app, canvas):
     adjust = 0
-    if (app.currentFrame in [2, 7]):
+    if (app.currentFrame in [2, 7, 14]):
         adjust = 2
     elif (app.currentFrame in [13]):
         adjust = 4
@@ -214,6 +214,7 @@ def drawBoundingBoxes(app, canvas):
 
 def main():
     runApp(width = 1600, height = 800, mvcCheck = False)
+    pygame.mixer.quit()
 
 if __name__ == '__main__':
     main()

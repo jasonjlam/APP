@@ -1,0 +1,24 @@
+Citations (as of TP2)
+
+Assets
+
+Kirby Superstar Ultra 
+jump.wav
+shoot.wav
+wallhit.wav
+death.wav
+enemyHit.wav
+All Kirby sprites in /kirby
+
+Pokemon Black and White
+gastly.png
+All Haunter sprites in /haunter
+
+Concepts
+Speculative contacts for collision detection:
+https://github.com/mattleibow/jitterphysics/wiki/Speculative-Contacts
+
+External tools/plugins
+Pygame (for audio only)
+Tiled (for creating .csv files to import as stages)
+cmu_112_graphics.py (for animation)

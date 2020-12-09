@@ -173,7 +173,6 @@ class Stage(object):
         else:
             return False
                     
-        
 
     def stageToTiles(self):
         for row in range(self.numRows):
@@ -224,6 +223,30 @@ class Stage(object):
             return [self.boss] + self.entities
         else:
             return self.entities
+
+class Platform (object):
+    def __init__(self, x, y, w, row, col):
+        self.x = x
+        self.y = y
+        self.row = row
+        self.col = col
+        self.w = w
+
+    def __hash__(self):
+        return hash(self.x, self.y, self.w)
+
+    def isValid(self, stage):
+        matrix = stage[self.row - 2, self.row + 3][self.col - 2, 
+            self.col + self.w + 3]
+        for row in len(matrix):
+            for col in range(len(matrix[0])):
+                if (matrix[row][col] != 0):
+                    return False
+        return True
+
+    def toStage(self, stage):
+        for i in range(self.w):
+            matrix[self.row][col + i] = 1 
 
 class HaunterStage(Stage):
     def __init__(self, width, height, num):

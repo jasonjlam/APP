@@ -114,5 +114,18 @@ class FireBar(Square):
                 self.direction, self.period)]
             r += self.ballR * 2
 
+class DartTrap(Square):
+    def __init__(self, x, y, size, vx, period, stage):
+        super().__init__(x, y, size)
+        self.vx = vx
+        self.period = period
+        self.stage = stage
+        self.timer = 0
+
+    def move(self, app):
+        if (self.timer > self.period):
+            app.stage.entities += [Dart(x, y + size / 2, 10, -10, 0)]
+
+
 
 

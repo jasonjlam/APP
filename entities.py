@@ -241,6 +241,42 @@ class Marker(Ball):
     def isTouching(self, boundingBoxes):
         return False
 
+class Dart(Ball):
+    def __init__(self, x, y, r, vx, vy):
+        super().__init__(x, y, r, vx, vy)
+        self.color = "green"
+
+    def isTouching(self, boundingBoxes):
+        for box in boundingBoxes:
+            boundingBox = boundingBoxes[box]
+            if (boxIntersectsCircle(boundingBox, self.x, self.y, self.r)):
+                return True
+        return False
+
+    def move(self, app):
+        if (not self.displayed):
+            app.stage.entities.remove(self)
+            return
+        stage = app.stage
+        self.x += self.vx
+        self.vx -= 0.1
+        if (self.x < 0 or self.x > stage.width):
+            self.displayed = False
+            return
+        tiles = []
+        for tile in stage.tiles:
+            if (tile.inProximity(self.x, self.y, 40)):
+                if (boxIntersectsCircle(tile.boundingBox, self.x, self.y,
+                    self.r)):
+                    self.displayed = False
+                    app.audio.playAudio("wallHit")
+
+    def draw(self, app, canvas):
+        canvas.create_oval(self.x - self.r, self.y - self.r, self.x + self.r,
+            self.y + self.r, fill = self.color)
+    
+
+
 class NightShade(Entity):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
@@ -317,7 +353,7 @@ class VerticalLaser(Entity):
         else:
             self.boundingBox = None
 
-    def drawBoundingBox(self):
+    def drawBoundingBox(self, canvas):
         if (self.boundingBox != None):
             x0, y0, x1, y1 = self.boundingBox
             canvas.create_rectangle(x0, y0, x1, y1, outline = "green")
